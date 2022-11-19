@@ -1,4 +1,6 @@
 #include "finder.h"
+
+#include "file.h"
 #include "shapes.h"
 #include "colors.h"
 #include "main.h"
@@ -6,6 +8,7 @@
 #include <graphx.h>
 #include <keypadc.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 void drawFinderBackground(void);
 void drawFinderWindow(struct finder *finder);
@@ -38,9 +41,9 @@ void displayFiles(struct finder *finder)
 	
 	gfx_SetTextFGColor(black);
 	
-	for(uint8_t i = finder->fileOffset, count = 0; i < MAX_FILES_ON_SCREEN && i < finder->numFiles; i++, count++)
+	for(uint8_t i = finder->fileOffset, count = 0; count < MAX_FILES_ON_SCREEN && i < finder->numFiles; i++, count++)
 	{
-		if(i == 0)
+		if(i == finder->selectedFile)
 		{
 			gfx_SetColor(finderSelectorColor);
 			chippedRectangle(FINDER_WINDOW_X + FILE_ENTRY_PADDING_LEFT, FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + count * FILE_SPACING, FILE_ENTRY_WIDTH, FILE_SPACING);
@@ -58,14 +61,75 @@ void displayFiles(struct finder *finder)
 enum programState runFinder(struct finder *finder)
 {
 	finder->fileOffset = 0;
+	finder->selectedFile = 0;
+	finder->selectedWasPressed = false;
 	finder->numFiles = loadFiles(finder->files);
 	
+	gfx_SetDraw(gfx_buffer);
 	drawFinderBackground();
 	drawFinderWindow(finder);
+	gfx_SwapDraw();
 	
-	while(!kb_AnyKey())
+	bool refreshAll = false;
+	bool refreshWindow = false;
+	bool reloadFiles = false;
+	
+	gfx_Blit(gfx_screen);
+	
+	while(1)
 	{
+		if(refreshAll == true)
+		{
+			gfx_SetDraw(gfx_buffer);
+			drawFinderBackground();
+			drawFinderWindow(finder);
+			gfx_SwapDraw();
+			
+			refreshAll = false;
+			refreshWindow = false;
+		}
+		else if(refreshWindow == true)
+		{
+			gfx_SetDraw(gfx_buffer);
+			drawFinderWindow(finder);
+			gfx_SwapDraw();
+			
+			refreshWindow = false;
+		}
+		if(reloadFiles == true)
+		{
+			finder->numFiles = loadFiles(finder->files);
+		}
+	
 		kb_Scan();
+		
+		if(kb_IsDown(kb_KeyClear))
+		{
+			return QUIT;
+		}
+		else if(kb_IsDown(kb_KeyUp) && finder->selectedFile > 0)
+		{
+			finder->selectedFile--;
+			if(finder->selectedFile < finder->fileOffset)
+			{
+				finder->fileOffset--;
+			}
+			
+			refreshWindow = true;
+			continue;
+		}
+		else if(kb_IsDown(kb_KeyDown) && finder->selectedFile < 30 && finder->selectedFile < finder->numFiles - 1)
+		{
+			finder->selectedFile++;
+			if(finder->selectedFile >= finder->fileOffset + MAX_FILES_ON_SCREEN)
+			{
+				finder->fileOffset++;
+			}
+			
+			refreshWindow = true;
+			continue;
+		}
+		
 	}
 	return QUIT;
 }

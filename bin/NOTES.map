@@ -2,14 +2,14 @@ Section          Base   Top    High   Length
 ---------------- ------ ------ ------ -------
 .icon            D1A882 D1A9AB           129h
 .init.libs       D1A9AB D1AA03            58h
-.libs            D1AA03 D1AA76            73h
-.init.clock      D1AA76 D1AA76             0h
-.init.reruncheck D1AA76 D1AA76             0h
-.init            D1AA76 D1AA96            20h
-.fini            D1AA96 D1AACA            34h
-.text            D1AACA D1B0DA           610h
-.data            D1B0DA D1B0EA            10h
-.rodata          D1B0EA D1B1A2            B8h
+.libs            D1AA03 D1AA7E            7Bh
+.init.clock      D1AA7E D1AA7E             0h
+.init.reruncheck D1AA7E D1AA7E             0h
+.init            D1AA7E D1AA9E            20h
+.fini            D1AA9E D1AAD2            34h
+.text            D1AAD2 D1B233           761h
+.data            D1B233 D1B243            10h
+.rodata          D1B243 D1B2FB            B8h
 .init_array      000000 000000             0h
 .ctors           000000 000000             0h
 .dtors           000000 000000             0h
@@ -29,47 +29,47 @@ ___ctors_count             = 000000
 ___dtors_count             = 000000
 ___fini_array_count        = 000000
 __stack                    = D1A87E
-__imulu                    = D1AACA
-_os_DisableHomeTextBuffer  = D1AAFA
-_os_EnableHomeTextBuffer   = D1AB0C
+__imulu                    = D1AAD2
+_os_DisableHomeTextBuffer  = D1AB02
+_os_EnableHomeTextBuffer   = D1AB14
 __ishl                     = 000174
 __ishru                    = 000184
 _strcpy                    = 0000CC
-.missingappvar             = D1B0EA
-.libloadname               = D1B0EF
+.missingappvar             = D1B243
+.libloadname               = D1B248
 .libloadnamelen            = 000007
-.webaddress                = D1B0F7
-__start                    = D1AA76
-___exithl                  = D1AA96
-skip._exit                 = D1AA96
-skip.__Exit                = D1AA96
-skip._abort                = D1AA96
-_exit.sp                   = D1AA97
-_exit.flash_wait_states    = D1AAA1
-_displayFiles              = D1AB1E
-_runFinder                 = D1AC9F
-_main                      = D1ADFD
-_window                    = D1AED8
-_.str.2                    = D1B10C
-_.str.3                    = D1B113
-_.str.1.4                  = D1B117
-_.str.2.5                  = D1B11B
-_.str.3.6                  = D1B121
-_.str.4                    = D1B126
-_.str.5                    = D1B12B
-_.str.6                    = D1B12F
-_.str.7                    = D1B135
-_.str.8                    = D1B13B
-_.str.9                    = D1B140
-_.str.10                   = D1B144
-_.str.11                   = D1B14B
-_.str.12                   = D1B152
-_.str.13                   = D1B15B
-_.str.14                   = D1B164
-___const.main.names        = D1B16C
-_.str.15                   = D1B199
-_.str.16                   = D1B19C
-_palette                   = D1B0DA
+.webaddress                = D1B250
+__start                    = D1AA7E
+___exithl                  = D1AA9E
+skip._exit                 = D1AA9E
+skip.__Exit                = D1AA9E
+skip._abort                = D1AA9E
+_exit.sp                   = D1AA9F
+_exit.flash_wait_states    = D1AAA9
+_displayFiles              = D1AB26
+_runFinder                 = D1AC91
+_main                      = D1AF56
+_window                    = D1B031
+_.str.2                    = D1B265
+_.str.3                    = D1B26C
+_.str.1.4                  = D1B270
+_.str.2.5                  = D1B274
+_.str.3.6                  = D1B27A
+_.str.4                    = D1B27F
+_.str.5                    = D1B284
+_.str.6                    = D1B288
+_.str.7                    = D1B28E
+_.str.8                    = D1B294
+_.str.9                    = D1B299
+_.str.10                   = D1B29D
+_.str.11                   = D1B2A4
+_.str.12                   = D1B2AB
+_.str.13                   = D1B2B4
+_.str.14                   = D1B2BD
+___const.main.names        = D1B2C5
+_.str.15                   = D1B2F2
+_.str.16                   = D1B2F5
+_palette                   = D1B233
 lib.LibLoad                = D1AA03
 _#ti_Open                  = D1AA17
 _#ti_Close                 = D1AA1B
@@ -80,13 +80,15 @@ _#gfx_Begin                = D1AA34
 _#gfx_End                  = D1AA38
 _#gfx_SetColor             = D1AA3C
 _#gfx_SetPalette           = D1AA40
-_#gfx_PrintStringXY        = D1AA44
-_#gfx_SetTextFGColor       = D1AA48
-_#gfx_GetStringWidth       = D1AA4C
-_#gfx_Circle               = D1AA50
-_#gfx_HorizLine_NoClip     = D1AA54
-_#gfx_VertLine_NoClip      = D1AA58
-_#gfx_FillCircle_NoClip    = D1AA5C
-_#gfx_FillRectangle_NoClip = D1AA60
-_#kb_Scan                  = D1AA6E
-_#kb_AnyKey                = D1AA72
+_#gfx_SetDraw              = D1AA44
+_#gfx_SwapDraw             = D1AA48
+_#gfx_Blit                 = D1AA4C
+_#gfx_PrintStringXY        = D1AA50
+_#gfx_SetTextFGColor       = D1AA54
+_#gfx_GetStringWidth       = D1AA58
+_#gfx_Circle               = D1AA5C
+_#gfx_HorizLine_NoClip     = D1AA60
+_#gfx_VertLine_NoClip      = D1AA64
+_#gfx_FillCircle_NoClip    = D1AA68
+_#gfx_FillRectangle_NoClip = D1AA6C
+_#kb_Scan                  = D1AA7A
