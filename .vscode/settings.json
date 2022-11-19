@@ -1,0 +1,10 @@
+{
+	"files.associations": {
+		"string.h": "c",
+		"main.h": "c",
+		"graphx.h": "c",
+		"shapes.h": "c",
+		"keypadc.h": "c",
+		"stdint.h": "c"
+	}
+}
