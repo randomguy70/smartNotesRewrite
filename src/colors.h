@@ -15,6 +15,7 @@ enum color
 	finderWindowBodyColor,
 	finderWindowOutlineColor,
 	finderWindowBackgroundColor,
+	finderSelectorColor,
 };
 
 #ifdef __cplusplus

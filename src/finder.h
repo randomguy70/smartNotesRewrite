@@ -11,10 +11,11 @@
 extern "C" {
 #endif
 
-#define MAX_FILES_ON_SCREEN 9
-#define FILE_SPACING  16
+#define MAX_FILES_ON_SCREEN     9
+#define FILE_SPACING            16
 #define FILE_ENTRY_PADDING_LEFT 10
-#define FILE_ENTRY_WIDTH 80
+#define FILE_NAME_PADDING_LEFT  20
+#define FILE_ENTRY_WIDTH        80
 
 #define FINDER_WINDOW_BORDER_RADIUS  16
 #define FINDER_WINDOW_HEADER_HEIGHT  FINDER_WINDOW_BORDER_RADIUS // a window header height is always equal to the border radius

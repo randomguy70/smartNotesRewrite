@@ -33,12 +33,23 @@ void drawFinderWindow(struct finder *finder)
 
 void displayFiles(struct finder *finder)
 {
-	int fileEntryX = FINDER_WINDOW_X + FILE_ENTRY_PADDING_LEFT;
-	int fileEntryY = FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + 5;
+	int fileEntryX = FINDER_WINDOW_X + FILE_NAME_PADDING_LEFT;
+	int fileEntryY = FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + (FILE_SPACING - 8) / 2;
 	
 	gfx_SetTextFGColor(black);
-	for(uint8_t i = finder->fileOffset; i < MAX_FILES_ON_SCREEN && i < finder->numFiles; i++)
+	
+	for(uint8_t i = finder->fileOffset, count = 0; i < MAX_FILES_ON_SCREEN && i < finder->numFiles; i++, count++)
 	{
+		if(i == 0)
+		{
+			gfx_SetColor(finderSelectorColor);
+			chippedRectangle(FINDER_WINDOW_X + FILE_ENTRY_PADDING_LEFT, FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + count * FILE_SPACING, FILE_ENTRY_WIDTH, FILE_SPACING);
+			gfx_SetTextFGColor(white);
+		}
+		else
+		{
+			gfx_SetTextFGColor(black);
+		}
 		gfx_PrintStringXY(finder->files[i].name, fileEntryX, fileEntryY);
 		fileEntryY += FILE_SPACING;
 	}

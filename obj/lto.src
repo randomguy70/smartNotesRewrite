@@ -291,16 +291,14 @@ _drawFinderWindow:
 	push	ix
 	ld	ix, 0
 	add	ix, sp
-	lea	hl, ix - 9
-	ld	sp, hl
-	ld	hl, 16
-	ld	iy, 3
-	ld	bc, 4
-	ld	de, 5
+	ld	iy, 16
+	ld	bc, 3
+	ld	de, 4
+	ld	hl, 5
+	push	hl
 	push	de
 	push	bc
 	push	iy
-	push	hl
 	ld	hl, 165
 	push	hl
 	ld	hl, 250
@@ -337,68 +335,9 @@ _drawFinderWindow:
 	ld	hl, 9
 	add	hl, sp
 	ld	sp, hl
-	ld	hl, 1
+	ld	hl, (ix + 6)
 	push	hl
-	call	_gfx_SetTextFGColor
-	ld	de, (ix + 6)
-	pop	hl
-	ld	bc, 332
-	push	de
-	pop	hl
-	add	hl, bc
-	ld	a, (hl)
-	cp	a, 9
-	jr	nc, BB6_4
-	ld	bc, 11
-	ld	hl, 58
-	ld	(ix - 6), hl
-	or	a, a
-	sbc	hl, hl
-	ld	l, a
-	ld	(ix - 3), hl
-	call	__imulu
-	push	hl
-	pop	bc
-	push	de
-	pop	hl
-	add	hl, bc
-	ld	(ix - 9), hl
-BB6_2:
-	ex	de, hl
-	ld	de, 330
-	add	hl, de
-	ld	de, 0
-	ld	e, (hl)
-	ld	hl, (ix - 3)
-	or	a, a
-	sbc	hl, de
-	jr	nc, BB6_4
-	ld	hl, (ix - 6)
-	push	hl
-	ld	hl, 45
-	push	hl
-	ld	hl, (ix - 9)
-	push	hl
-	call	_gfx_PrintStringXY
-	ld	de, (ix + 6)
-	ld	hl, 9
-	add	hl, sp
-	ld	sp, hl
-	ld	bc, 16
-	ld	hl, (ix - 6)
-	add	hl, bc
-	ld	(ix - 6), hl
-	ld	hl, (ix - 3)
-	inc	hl
-	ld	iy, (ix - 9)
-	lea	iy, iy + 11
-	ld	(ix - 9), iy
-	ld	(ix - 3), hl
-	ld	bc, 9
-	or	a, a
-	sbc	hl, bc
-	jr	nz, BB6_2
-BB6_4:
+	call	_displayFiles
 	ld	sp, ix
 	pop	ix
 	ret
@@ -410,70 +349,165 @@ _displayFiles:
 	push	ix
 	ld	ix, 0
 	add	ix, sp
-	lea	hl, ix - 9
+	lea	hl, ix - 24
 	ld	sp, hl
-	ld	hl, 1
+	sbc	hl, hl
+	ld	(ix - 3), hl
+	inc	hl
 	push	hl
 	call	_gfx_SetTextFGColor
-	ld	de, (ix + 6)
 	pop	hl
-	ld	bc, 332
-	push	de
-	pop	hl
-	add	hl, bc
-	ld	a, (hl)
+	ld	de, 332
+	ld	hl, (ix + 6)
+	add	hl, de
+	ld	c, (hl)
+	ld	a, c
 	cp	a, 9
-	jr	nc, BB7_4
-	ld	bc, 11
-	ld	hl, 58
-	ld	(ix - 6), hl
+	jp	nc, BB7_6
+	ld	a, 9
+	ld	e, 68
+	ld	(ix - 9), de
 	or	a, a
 	sbc	hl, hl
-	ld	l, a
-	ld	(ix - 3), hl
+	ld	l, c
+	sub	a, c
+	ld	de, 0
+	ld	e, a
+	ld	(ix - 6), hl
+	ld	bc, 11
 	call	__imulu
 	push	hl
 	pop	bc
-	push	de
-	pop	hl
+	ld	hl, (ix + 6)
 	add	hl, bc
-	ld	(ix - 9), hl
-BB7_2:
+	ld	(ix - 12), hl
+	ld	c, 4
 	ex	de, hl
+	call	__ishl
+	ld	iy, 0
+	ld	(ix - 18), hl
 	ld	de, 330
-	add	hl, de
-	ld	de, 0
-	ld	e, (hl)
+BB7_2:
 	ld	hl, (ix - 3)
+	ld	bc, 57
+	add	hl, bc
+	ld	(ix - 15), hl
+	ld	hl, (ix + 6)
+	add	hl, de
+	lea	de, iy
+	ld	e, (hl)
+	ld	hl, (ix - 6)
 	or	a, a
 	sbc	hl, de
-	jr	nc, BB7_4
+	jp	nc, BB7_6
 	ld	hl, (ix - 6)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	hl, 1
+	jp	nz, BB7_5
+	ld	hl, 7
 	push	hl
-	ld	hl, 45
-	push	hl
+	call	_gfx_SetColor
+	pop	hl
 	ld	hl, (ix - 9)
+	ld	a, l
+	add	a, -15
+	ld	e, a
+	ld	(ix - 24), de
+	ld	a, l
+	add	a, -14
+	ld	e, a
+	ld	(ix - 21), de
+	ld	hl, 14
 	push	hl
-	call	_gfx_PrintStringXY
-	ld	de, (ix + 6)
+	ld	hl, 78
+	push	hl
+	push	de
+	ld	hl, 46
+	push	hl
+	call	_gfx_FillRectangle_NoClip
+	ld	hl, 12
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, 78
+	push	hl
+	ld	hl, (ix - 24)
+	push	hl
+	ld	hl, 46
+	push	hl
+	call	_gfx_HorizLine_NoClip
 	ld	hl, 9
 	add	hl, sp
 	ld	sp, hl
-	ld	bc, 16
+	ld	hl, 78
+	push	hl
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, 46
+	push	hl
+	call	_gfx_HorizLine_NoClip
+	ld	hl, 9
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, 14
+	push	hl
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, 45
+	push	hl
+	call	_gfx_VertLine_NoClip
+	ld	hl, 9
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, 14
+	push	hl
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, 124
+	push	hl
+	call	_gfx_VertLine_NoClip
+	ld	hl, 9
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, 2
+BB7_5:
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, 55
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	call	_gfx_PrintStringXY
+	ld	hl, 9
+	add	hl, sp
+	ld	sp, hl
 	ld	hl, (ix - 6)
-	add	hl, bc
-	ld	(ix - 6), hl
-	ld	hl, (ix - 3)
 	inc	hl
-	ld	iy, (ix - 9)
+	ld	(ix - 6), hl
+	ld	iy, (ix - 12)
 	lea	iy, iy + 11
-	ld	(ix - 9), iy
-	ld	(ix - 3), hl
-	ld	bc, 9
+	ld	(ix - 12), iy
+	ld	hl, (ix - 9)
+	ld	a, l
+	add	a, 16
+	ld	l, a
+	ld	(ix - 9), hl
+	ld	hl, (ix - 3)
+	ld	de, 16
+	add	hl, de
+	ex	de, hl
+	ld	hl, (ix - 18)
 	or	a, a
-	sbc	hl, bc
-	jr	nz, BB7_2
-BB7_4:
+	sbc	hl, de
+	ld	(ix - 3), de
+	ld	iy, 0
+	ld	de, 330
+	jp	nz, BB7_2
+BB7_6:
 	ld	sp, ix
 	pop	ix
 	ret
@@ -511,55 +545,18 @@ _runFinder:
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	jr	nz, BB8_6
-BB8_1:
-	ld	bc, (ix + 6)
+	jr	nz, BB8_2
+	ld	hl, (ix + 6)
+	jr	BB8_6
 BB8_2:
-	ld	de, 330
-	push	bc
-	pop	hl
-	add	hl, de
-	ld	a, (ix - 4)
-	ld	(hl), a
-	ld	hl, 6
-	push	hl
-	call	_gfx_SetColor
-	pop	hl
-	ld	hl, -16
-	push	hl
-	ld	hl, 320
-	push	hl
+	ld	iy, (ix + 6)
 	or	a, a
 	sbc	hl, hl
-	push	hl
-	push	hl
-	call	_gfx_FillRectangle_NoClip
-	ld	hl, 12
-	add	hl, sp
-	ld	sp, hl
-	ld	hl, (ix + 6)
-	push	hl
-	call	_drawFinderWindow
-	pop	hl
+	ld	(ix - 10), hl
 BB8_3:
-	call	_kb_AnyKey
-	or	a, a
-	jr	nz, BB8_5
-	call	_kb_Scan
-	jr	BB8_3
-BB8_5:
-	ld	hl, 3
-	ld	sp, ix
-	pop	ix
-	ret
-BB8_6:
-	ld	hl, (ix + 6)
-	ld	bc, 0
-	ld	(ix - 10), bc
-BB8_7:
 	push	de
-	ld	(ix - 13), hl
-	push	hl
+	ld	(ix - 13), iy
+	push	iy
 	call	_strcpy
 	ld	hl, 6
 	add	hl, sp
@@ -582,7 +579,7 @@ BB8_7:
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	jp	z, BB8_1
+	jr	z, BB8_5
 	ld	hl, (ix - 10)
 	push	hl
 	pop	bc
@@ -595,10 +592,95 @@ BB8_7:
 	sbc	hl, bc
 	ld	hl, (ix - 16)
 	ld	(ix - 10), hl
-	lea	hl, iy
 	ld	bc, (ix + 6)
-	jr	c, BB8_7
-	jp	BB8_2
+	push	bc
+	pop	hl
+	jr	c, BB8_3
+	jr	BB8_6
+BB8_5:
+	ld	bc, (ix + 6)
+	push	bc
+	pop	hl
+BB8_6:
+	ld	de, 330
+	add	hl, de
+	ld	a, (ix - 4)
+	ld	(hl), a
+	ld	hl, 6
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, -16
+	push	hl
+	ld	hl, 320
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	push	hl
+	call	_gfx_FillRectangle_NoClip
+	ld	hl, 12
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, 5
+	push	hl
+	dec	hl
+	push	hl
+	dec	hl
+	push	hl
+	ld	hl, 16
+	push	hl
+	ld	hl, 165
+	push	hl
+	ld	hl, 250
+	push	hl
+	ld	hl, 37
+	push	hl
+	ld	hl, 35
+	push	hl
+	call	_window
+	ld	hl, 24
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, 1
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, _.str.2
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, 160
+	or	a, a
+	sbc	hl, de
+	ld	de, 42
+	push	de
+	push	hl
+	ld	hl, _.str.2
+	push	hl
+	call	_gfx_PrintStringXY
+	ld	hl, 9
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_displayFiles
+	pop	hl
+BB8_7:
+	call	_kb_AnyKey
+	or	a, a
+	jr	nz, BB8_9
+	call	_kb_Scan
+	jr	BB8_7
+BB8_9:
+	ld	hl, 3
+	ld	sp, ix
+	pop	ix
+	ret
 	section	.text,"ax",@progbits
 
 	section	.text,"ax",@progbits
@@ -614,7 +696,7 @@ _main:
 	or	a, a
 	sbc	hl, hl
 	push	hl
-	ld	hl, 14
+	ld	hl, 16
 	push	hl
 	ld	hl, _palette
 	push	hl
@@ -705,7 +787,7 @@ _init:
 	or	a, a
 	sbc	hl, hl
 	push	hl
-	ld	hl, 14
+	ld	hl, 16
 	push	hl
 	ld	hl, _palette
 	push	hl
@@ -1299,7 +1381,7 @@ _.str.16:
 	section	.data,"aw",@progbits
 	public	_palette
 _palette:
-	db	"|", 0, 0, "ÿÿãÿÿŒ±µV"
+	db	"|", 0, 0, "ÿÿãÿÿŒ±µVÿ"
 
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
@@ -1319,8 +1401,8 @@ _palette:
 	extern	_ti_Write
 	extern	_ti_Close
 	extern	__ishru
-	extern	_gfx_VertLine_NoClip
 	extern	__ishl
+	extern	_gfx_VertLine_NoClip
 	extern	_strlen
 	extern	_ti_SetArchiveStatus
 	extern	_gfx_Circle
@@ -1331,6 +1413,6 @@ _palette:
 	extern	_gfx_SetColor
 	extern	_gfx_FillCircle_NoClip
 	extern	_ti_Rename
-	extern	_gfx_PrintStringXY
 	extern	_gfx_HorizLine_NoClip
+	extern	_gfx_PrintStringXY
 	extern	_gfx_End
