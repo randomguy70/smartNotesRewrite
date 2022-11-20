@@ -9,10 +9,13 @@
 #include <keypadc.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/timers.h>
 
 void drawFinderBackground(void);
 void drawFinderWindow(struct finder *finder);
 void displayFiles(struct finder *finder);
+bool canScrollUp(struct finder *finder);
+bool canScrollDown(struct finder *finder);
 
 enum programState runFinder(struct finder *finder);
 
@@ -58,23 +61,84 @@ void displayFiles(struct finder *finder)
 	}
 }
 
-enum programState runFinder(struct finder *finder)
+void initFinder(struct finder *finder)
 {
 	finder->fileOffset = 0;
 	finder->selectedFile = 0;
 	finder->selectedWasPressed = false;
 	finder->numFiles = loadFiles(finder->files);
+	finder->prevDown = false;
+	finder->prevUp = false;
+	finder->timeSinceScrollUp = 0;
+	finder->timeSinceScrollDown = 0;
+}
+
+bool canScrollUp(struct finder *finder)
+{
+	if(!(finder->selectedFile > 0))
+	{
+		return false;
+	}
+	
+	if(!finder->prevUp)
+	{
+		return true;
+	}
+	else if(finder->timeSinceScrollUp >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool canScrollDown(struct finder *finder)
+{
+	if(!(finder->selectedFile < 30 && finder->selectedFile < finder->numFiles - 1))
+	{
+		return false;
+	}
+	
+	if(!finder->prevDown)
+	{
+		return true;
+	}
+	else if(finder->timeSinceScrollDown >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+enum programState runFinder(struct finder *finder)
+{
+	float time = 0;
+	float prevTime = 0;
+	float deltaTime = 0;
+	
+	initFinder(finder);
 	
 	gfx_SetDraw(gfx_buffer);
 	drawFinderBackground();
 	drawFinderWindow(finder);
 	gfx_SwapDraw();
 	
+	// prevent weird background on swapDraw
+	gfx_Blit(gfx_screen);
+	
 	bool refreshAll = false;
 	bool refreshWindow = false;
 	bool reloadFiles = false;
 	
-	gfx_Blit(gfx_screen);
+	// reset timer
+	timer_Set(1, 0);
+	//Enable the timer while setting it to 32768 Hz and making it count up
+	timer_Enable(1, TIMER_32K, TIMER_0INT, TIMER_UP);
 	
 	while(1)
 	{
@@ -100,25 +164,37 @@ enum programState runFinder(struct finder *finder)
 		{
 			finder->numFiles = loadFiles(finder->files);
 		}
-	
+		
+		time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
+		deltaTime = time - prevTime;
+		prevTime = time;
+		
 		kb_Scan();
 		
 		if(kb_IsDown(kb_KeyClear))
 		{
 			return QUIT;
 		}
-		else if(kb_IsDown(kb_KeyUp) && finder->selectedFile > 0)
+		else if(kb_IsDown(kb_KeyUp) && canScrollUp(finder))
 		{
 			finder->selectedFile--;
 			if(finder->selectedFile < finder->fileOffset)
 			{
 				finder->fileOffset--;
 			}
+			finder->prevUp = true;
+			finder->timeSinceScrollUp = 0;
 			
 			refreshWindow = true;
 			continue;
 		}
-		else if(kb_IsDown(kb_KeyDown) && finder->selectedFile < 30 && finder->selectedFile < finder->numFiles - 1)
+		else
+		{
+			finder->timeSinceScrollUp += deltaTime;
+			finder->prevUp = false;
+		}
+		
+		if(kb_IsDown(kb_KeyDown) && canScrollDown(finder))
 		{
 			finder->selectedFile++;
 			if(finder->selectedFile >= finder->fileOffset + MAX_FILES_ON_SCREEN)
@@ -126,10 +202,16 @@ enum programState runFinder(struct finder *finder)
 				finder->fileOffset++;
 			}
 			
+			finder->timeSinceScrollDown = 0;
 			refreshWindow = true;
 			continue;
 		}
-		
+		else
+		{
+			finder->timeSinceScrollDown += 1;
+			finder->prevDown = false;
+		}
 	}
+	
 	return QUIT;
 }

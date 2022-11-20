@@ -506,12 +506,225 @@ BB7_5:
 	section	.text,"ax",@progbits
 
 	section	.text,"ax",@progbits
+	public	_initFinder
+_initFinder:
+	push	ix
+	ld	ix, 0
+	add	ix, sp
+	lea	hl, ix - 16
+	ld	sp, hl
+	ld	iy, (ix + 6)
+	xor	a, a
+	ld	(ix - 4), a
+	sbc	hl, hl
+	ld	(ix - 10), hl
+	lea	de, ix - 3
+	ld	bc, 332
+	add	iy, bc
+	ld	(iy), a
+	lea	bc, iy + 2
+	inc	iy
+	ld	(iy), a
+	push	bc
+	pop	hl
+	ld	(hl), a
+	ld	bc, 0
+	ld	(ix - 3), bc
+	ld	hl, _.str.16
+	push	hl
+	ld	(ix - 7), de
+	push	de
+	call	_ti_Detect
+	push	hl
+	pop	de
+	ld	hl, 6
+	add	hl, sp
+	ld	sp, hl
+	push	de
+	pop	hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB8_3
+BB8_1:
+	ld	hl, (ix + 6)
+BB8_2:
+	ld	de, 330
+	push	hl
+	pop	iy
+	add	iy, de
+	ld	a, (ix - 4)
+	ld	(iy), a
+	ld	de, 335
+	add	hl, de
+	ld	(hl), 0
+	push	hl
+	pop	iy
+	inc	iy
+	ld	bc, 9
+	lea	de, iy
+	ldir
+	ld	sp, ix
+	pop	ix
+	ret
+BB8_3:
+	ld	iy, (ix + 6)
+BB8_4:
+	push	de
+	ld	(ix - 13), iy
+	push	iy
+	call	_strcpy
+	ld	hl, 6
+	add	hl, sp
+	ld	sp, hl
+	ld	hl, _.str.16
+	push	hl
+	ld	hl, (ix - 7)
+	push	hl
+	call	_ti_Detect
+	push	hl
+	pop	de
+	ld	hl, 6
+	add	hl, sp
+	ld	sp, hl
+	ld	a, (ix - 4)
+	inc	a
+	ld	(ix - 4), a
+	push	de
+	pop	hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB8_1
+	ld	hl, (ix - 10)
+	push	hl
+	pop	bc
+	inc	bc
+	ld	(ix - 16), bc
+	ld	iy, (ix - 13)
+	lea	iy, iy + 11
+	ld	bc, 30
+	or	a, a
+	sbc	hl, bc
+	ld	hl, (ix - 16)
+	ld	(ix - 10), hl
+	ld	hl, (ix + 6)
+	jr	c, BB8_4
+	jp	BB8_2
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_canScrollUp
+_canScrollUp:
+	ld	iy, 0
+	add	iy, sp
+	ld	iy, (iy + 3)
+	ld	l, 0
+	ld	de, 333
+	lea	bc, iy
+	add	iy, de
+	ld	a, (iy)
+	or	a, a
+	jr	z, BB9_5
+	ld	de, 335
+	push	bc
+	pop	iy
+	lea	hl, iy
+	add	hl, de
+	bit	0, (hl)
+	jr	nz, BB9_3
+	ld	l, 1
+	ld	a, l
+	ret
+BB9_3:
+	ld	bc, 4718592
+	ld	a, 67
+	ld	de, 337
+	add	iy, de
+	ld	hl, (iy)
+	lea	iy, iy + 3
+	ld	e, (iy)
+	call	__fcmp
+	jp	p, BB9_6
+	ld	l, 0
+BB9_5:
+	ld	a, l
+	ret
+BB9_6:
+	ld	l, -1
+	ld	a, l
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_canScrollDown
+_canScrollDown:
+	push	ix
+	ld	ix, 0
+	add	ix, sp
+	ld	iy, (ix + 6)
+	ld	e, 0
+	ld	bc, 333
+	lea	hl, iy
+	add	hl, bc
+	ld	a, (hl)
+	cp	a, 30
+	jr	nc, BB10_7
+	ld	de, 0
+	push	de
+	pop	hl
+	ld	l, a
+	ld	bc, 330
+	add	iy, bc
+	ld	e, (iy)
+	push	de
+	pop	iy
+	dec	iy
+	ld	bc, -8388608
+	add	iy, bc
+	lea	de, iy
+	add	hl, bc
+	push	de
+	pop	bc
+	ld	e, 0
+	or	a, a
+	sbc	hl, bc
+	jr	nc, BB10_7
+	ld	de, 336
+	ld	iy, (ix + 6)
+	lea	hl, iy
+	add	hl, de
+	bit	0, (hl)
+	jr	nz, BB10_4
+	ld	e, 1
+	jr	BB10_7
+BB10_4:
+	ld	bc, 4718592
+	ld	a, 67
+	ld	de, 341
+	add	iy, de
+	ld	hl, (iy)
+	lea	iy, iy + 3
+	ld	e, (iy)
+	call	__fcmp
+	jp	p, BB10_6
+	ld	e, 0
+	jr	BB10_7
+BB10_6:
+	ld	e, -1
+BB10_7:
+	ld	a, e
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
 	public	_runFinder
 _runFinder:
 	push	ix
 	ld	ix, 0
 	add	ix, sp
-	lea	hl, ix - 18
+	lea	hl, ix - 33
 	ld	sp, hl
 	ld	hl, (ix + 6)
 	lea	de, ix - 3
@@ -524,14 +737,14 @@ _runFinder:
 	ld	(iy), 0
 	push	hl
 	pop	iy
-	ld	(ix - 9), iy
+	ld	(ix - 30), iy
 	lea	hl, iy + 2
 	ld	(hl), 0
 	ld	hl, 0
 	ld	(ix - 3), hl
 	ld	hl, _.str.16
 	push	hl
-	ld	(ix - 6), de
+	ld	(ix - 9), de
 	push	de
 	call	_ti_Detect
 	xor	a, a
@@ -546,18 +759,17 @@ _runFinder:
 	or	a, a
 	sbc	hl, bc
 	ld	hl, (ix + 6)
-	ld	c, a
-	jr	z, BB8_5
+	ld	(ix - 6), a
+	jr	z, BB11_5
 	push	hl
 	pop	iy
-	ld	c, a
+	ld	(ix - 6), a
 	or	a, a
 	sbc	hl, hl
-	ld	(ix - 15), hl
-BB8_2:
-	ld	(ix - 12), c
+	ld	(ix - 12), hl
+BB11_2:
 	push	de
-	ld	(ix - 18), iy
+	ld	(ix - 15), iy
 	push	iy
 	call	_strcpy
 	ld	hl, 6
@@ -565,46 +777,60 @@ BB8_2:
 	ld	sp, hl
 	ld	hl, _.str.16
 	push	hl
-	ld	hl, (ix - 6)
+	ld	hl, (ix - 9)
 	push	hl
 	call	_ti_Detect
-	ld	c, (ix - 12)
 	push	hl
 	pop	de
 	ld	hl, 6
 	add	hl, sp
 	ld	sp, hl
-	inc	c
+	ld	a, (ix - 6)
+	inc	a
 	push	de
 	pop	hl
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	jr	z, BB8_4
-	ld	a, c
-	ld	hl, (ix - 15)
+	ld	(ix - 6), a
+	jr	z, BB11_4
+	ld	hl, (ix - 12)
 	push	hl
 	pop	bc
 	inc	bc
-	ld	(ix - 12), bc
-	ld	iy, (ix - 18)
+	ld	(ix - 18), bc
+	ld	iy, (ix - 15)
 	lea	iy, iy + 11
 	ld	bc, 30
 	or	a, a
 	sbc	hl, bc
-	ld	hl, (ix - 12)
-	ld	(ix - 15), hl
-	ld	c, a
-	ld	hl, (ix + 6)
-	jr	c, BB8_2
-	jr	BB8_5
-BB8_4:
-	ld	hl, (ix + 6)
-BB8_5:
-	ld	de, 330
-	add	hl, de
+	ld	hl, (ix - 18)
 	ld	(ix - 12), hl
-	ld	(hl), c
+	ld	hl, (ix + 6)
+	jr	c, BB11_2
+	jr	BB11_5
+BB11_4:
+	ld	hl, (ix + 6)
+BB11_5:
+	ld	de, 330
+	push	hl
+	pop	bc
+	add	hl, de
+	ld	(ix - 33), hl
+	ld	a, (ix - 6)
+	ld	(hl), a
+	ld	de, 335
+	push	bc
+	pop	hl
+	add	hl, de
+	ld	(hl), 0
+	push	hl
+	pop	iy
+	inc	iy
+	ld	bc, 9
+	lea	de, iy
+	ld	(ix - 24), hl
+	ldir
 	ld	hl, 1
 	push	hl
 	call	_gfx_SetDraw
@@ -679,12 +905,32 @@ BB8_5:
 	push	hl
 	call	_gfx_Blit
 	pop	hl
-	ld	b, 0
-BB8_6:
-	ld	a, b
+	or	a, a
+	sbc	hl, hl
+	ld	(-917504), hl
+	ld	c, h
+	ld	a, c
+	ld	(-917501), a
+	ld	iy, -917456
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	a, l
+	or	a, 7
+	ld	e, a
+	ld	a, h
+	or	a, 2
+	ld	d, a
+	ld	(iy), e
+	ld	(iy + 1), d
+	sbc	hl, hl
+	ld	(ix - 6), hl
+	ld	(ix - 9), c
+	ld	l, c
+BB11_6:
+	ld	a, l
 	and	a, 1
 	bit	0, a
-	jr	z, BB8_8
+	jr	z, BB11_8
 	ld	hl, 1
 	push	hl
 	call	_gfx_SetDraw
@@ -738,9 +984,28 @@ BB8_6:
 	call	_displayFiles
 	pop	hl
 	call	_gfx_SwapDraw
-	ld	b, 0
-BB8_8:
-	ld	(ix - 6), b
+	ld	l, 0
+BB11_8:
+	ld	(ix - 18), l
+	ld	hl, -917504
+	push	hl
+	call	_atomic_load_increasing_32
+	push	hl
+	pop	bc
+	ld	a, e
+	pop	hl
+	call	__ultof
+	or	a, a
+	sbc	hl, hl
+	ld	e, 56
+	call	__fmul
+	ld	(ix - 15), bc
+	ld	(ix - 12), a
+	ld	hl, (ix - 6)
+	ld	e, (ix - 9)
+	call	__fsub
+	ld	(ix - 6), bc
+	ld	(ix - 9), a
 	call	_kb_Scan
 	ld	hl, -720868
 	push	de
@@ -752,7 +1017,7 @@ BB8_8:
 	pop	de
 	ld	a, l
 	bit	6, a
-	jp	nz, BB8_18
+	jp	nz, BB11_26
 	ld	hl, -720866
 	push	de
 	ld	e, (hl)
@@ -763,15 +1028,57 @@ BB8_8:
 	pop	de
 	ld	a, l
 	bit	3, a
-	jr	z, BB8_11
 	ld	hl, (ix + 6)
+	push	hl
+	pop	bc
+	jr	z, BB11_13
+	push	bc
+	pop	hl
 	ld	de, 333
 	add	hl, de
-	ld	e, (hl)
-	ld	a, e
+	ld	d, (hl)
+	ld	a, d
 	or	a, a
-	jr	nz, BB8_16
-BB8_11:
+	jr	z, BB11_13
+	ld	iy, (ix - 24)
+	bit	0, (iy)
+	jp	z, BB11_19
+	push	bc
+	pop	iy
+	ld	bc, 337
+	add	iy, bc
+	ld	(ix - 21), hl
+	ld	hl, (iy)
+	lea	iy, iy + 3
+	ld	e, (iy)
+	ld	bc, 4718592
+	ld	a, 67
+	call	__fcmp
+	ld	hl, (ix + 6)
+	push	hl
+	pop	bc
+	ld	hl, (ix - 21)
+	jp	p, BB11_19
+BB11_13:
+	push	bc
+	pop	iy
+	ld	de, 337
+	add	iy, de
+	ld	(ix - 27), iy
+	ld	hl, (iy)
+	lea	de, iy + 3
+	ld	(ix - 21), de
+	ld	bc, (ix - 6)
+	ld	a, (ix - 9)
+	ld	iy, (ix - 21)
+	ld	e, (iy)
+	call	__fadd
+	ld	hl, (ix - 27)
+	ld	(hl), bc
+	ld	hl, (ix - 21)
+	ld	(hl), a
+	ld	hl, (ix - 24)
+	ld	(hl), 0
 	ld	hl, -720866
 	push	de
 	ld	e, (hl)
@@ -781,42 +1088,109 @@ BB8_11:
 	ld	h, d
 	pop	de
 	ld	a, l
+	ld	hl, (ix + 6)
+	push	hl
+	pop	bc
 	and	a, 1
 	bit	0, a
-	ld	b, (ix - 6)
-	jp	z, BB8_6
-	ld	hl, (ix + 6)
+	jr	z, BB11_18
+	push	bc
+	pop	hl
 	ld	de, 333
 	add	hl, de
-	ld	a, (hl)
+	ld	(ix - 6), hl
+	ld	d, (hl)
+	ld	a, d
 	cp	a, 30
-	jp	nc, BB8_6
-	ld	de, 0
-	ld	(ix - 15), hl
-	push	de
+	jr	nc, BB11_18
+	ld	bc, 0
+	push	bc
 	pop	hl
-	ld	l, a
-	ld	iy, (ix - 12)
-	ld	e, (iy)
-	push	de
+	ld	l, d
+	ld	iy, (ix - 33)
+	ld	c, (iy)
+	push	bc
 	pop	iy
 	dec	iy
-	ld	de, -8388608
-	add	iy, de
-	add	hl, de
-	lea	de, iy
+	ld	bc, -8388608
+	add	iy, bc
+	add	hl, bc
+	lea	bc, iy
 	or	a, a
-	sbc	hl, de
-	ld	hl, (ix - 15)
-	jp	nc, BB8_6
-	inc	a
+	sbc	hl, bc
+	ld	hl, (ix + 6)
+	push	hl
+	pop	bc
+	jr	nc, BB11_18
+	ld	hl, (ix + 6)
+	ld	bc, 336
+	add	hl, bc
+	bit	0, (hl)
+	ld	iy, (ix + 6)
+	jp	z, BB11_22
+	ld	bc, 341
+	add	iy, bc
+	ld	hl, (iy)
+	lea	iy, iy + 3
+	ld	e, (iy)
+	ld	bc, 4718592
+	ld	a, 67
+	call	__fcmp
+	ld	hl, (ix + 6)
+	push	hl
+	pop	bc
+	jp	p, BB11_22
+BB11_18:
+	push	bc
+	pop	iy
+	ld	de, 341
+	add	iy, de
+	ld	bc, (iy)
+	lea	hl, iy + 3
+	ld	(ix - 6), hl
+	ld	a, (hl)
+	ld	hl, -8388608
+	ld	e, 63
+	call	__fadd
+	ld	(iy), bc
+	ld	hl, (ix - 6)
 	ld	(hl), a
+	ld	hl, (ix + 6)
+	ld	de, 336
+	add	hl, de
+	ld	(hl), 0
+	ld	hl, (ix - 15)
+	ld	(ix - 6), hl
+	ld	a, (ix - 12)
+	ld	(ix - 9), a
+	ld	l, (ix - 18)
+	jp	BB11_6
+BB11_19:
+	dec	d
+	ld	(hl), d
+	ld	iy, (ix - 30)
+	ld	l, (iy)
+	ld	a, d
+	cp	a, l
+	jr	nc, BB11_21
+	dec	l
+	ld	(iy), l
+BB11_21:
+	ld	hl, (ix - 24)
+	ld	(hl), 1
+	ld	iy, (ix + 6)
+	ld	de, 337
+	jr	BB11_25
+BB11_22:
+	inc	d
+	ld	hl, (ix - 6)
+	ld	(hl), d
 	or	a, a
 	sbc	hl, hl
 	push	hl
 	pop	bc
-	ld	c, a
-	ld	iy, (ix - 9)
+	ld	c, d
+	ld	iy, (ix - 30)
 	ld	a, (iy)
 	ld	l, a
 	ld	de, 9
@@ -826,28 +1200,26 @@ BB8_11:
 	pop	hl
 	or	a, a
 	sbc	hl, de
-	ld	b, 1
-	jp	c, BB8_6
+	jr	c, BB11_24
 	inc	a
-	ld	hl, (ix - 9)
-	ld	(hl), a
-	ld	b, 1
-	jp	BB8_6
-BB8_16:
-	dec	e
-	ld	(hl), e
-	ld	hl, (ix - 9)
-	ld	c, (hl)
-	ld	a, e
-	cp	a, c
-	ld	b, 1
-	jp	nc, BB8_6
-	dec	c
-	ld	hl, (ix - 9)
-	ld	(hl), c
-	ld	b, 1
-	jp	BB8_6
-BB8_18:
+	ld	(iy), a
+BB11_24:
+	ld	iy, (ix + 6)
+	ld	de, 341
+BB11_25:
+	add	iy, de
+	or	a, a
+	sbc	hl, hl
+	ld	(iy), hl
+	lea	hl, iy + 3
+	ld	(hl), 0
+	ld	hl, (ix - 15)
+	ld	(ix - 6), hl
+	ld	a, (ix - 12)
+	ld	(ix - 9), a
+	ld	l, 1
+	jp	BB11_6
+BB11_26:
 	ld	hl, 3
 	ld	sp, ix
 	pop	ix
@@ -860,7 +1232,7 @@ _main:
 	push	ix
 	ld	ix, 0
 	add	ix, sp
-	ld	hl, -347
+	ld	hl, -357
 	add	hl, sp
 	ld	sp, hl
 	call	_gfx_Begin
@@ -876,8 +1248,8 @@ _main:
 	add	hl, sp
 	ld	sp, hl
 	ld	iy, 0
-BB9_1:
-	ld	bc, -347
+BB12_1:
+	ld	bc, -357
 	lea	hl, ix
 	add	hl, bc
 	ld	(hl), iy
@@ -890,7 +1262,7 @@ BB9_1:
 	push	hl
 	call	_ti_Open
 	ld	e, a
-	ld	bc, -344
+	ld	bc, -354
 	lea	hl, ix
 	add	hl, bc
 	ld	(hl), de
@@ -908,7 +1280,7 @@ BB9_1:
 	ld	hl, 12
 	add	hl, sp
 	ld	sp, hl
-	ld	bc, -344
+	ld	bc, -354
 	lea	hl, ix
 	add	hl, bc
 	ld	hl, (hl)
@@ -919,13 +1291,13 @@ BB9_1:
 	ld	hl, 6
 	add	hl, sp
 	ld	sp, hl
-	ld	bc, -344
+	ld	bc, -354
 	lea	hl, ix
 	add	hl, bc
 	ld	hl, (hl)
 	push	hl
 	call	_ti_Close
-	ld	bc, -347
+	ld	bc, -357
 	lea	hl, ix
 	add	hl, bc
 	ld	iy, (hl)
@@ -936,8 +1308,8 @@ BB9_1:
 	ld	de, 45
 	or	a, a
 	sbc	hl, de
-	jp	nz, BB9_1
-	ld	bc, -341
+	jp	nz, BB12_1
+	ld	bc, -351
 	lea	hl, ix
 	add	hl, bc
 	push	hl
@@ -1565,14 +1937,18 @@ _palette:
 	extern	_gfx_SetTextFGColor
 	extern	_gfx_FillRectangle_NoClip
 	extern	_gfx_Begin
+	extern	__fadd
 	extern	_kb_Scan
 	extern	_gfx_GetStringWidth
 	extern	_gfx_SetPalette
+	extern	_atomic_load_increasing_32
 	extern	_ti_Write
 	extern	_ti_Close
 	extern	__ishru
+	extern	__ultof
 	extern	_gfx_VertLine_NoClip
 	extern	_gfx_SwapDraw
+	extern	__fmul
 	extern	__ishl
 	extern	_strlen
 	extern	_gfx_SetDraw
@@ -1589,3 +1965,5 @@ _palette:
 	extern	_gfx_HorizLine_NoClip
 	extern	_gfx_PrintStringXY
 	extern	_gfx_End
+	extern	__fcmp
+	extern	__fsub

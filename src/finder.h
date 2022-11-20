@@ -17,13 +17,16 @@ extern "C" {
 #define FILE_NAME_PADDING_LEFT  20
 #define FILE_ENTRY_WIDTH        80
 
-#define FINDER_WINDOW_BORDER_RADIUS  16
-#define FINDER_WINDOW_HEADER_HEIGHT  FINDER_WINDOW_BORDER_RADIUS // a window header height is always equal to the border radius
-#define FINDER_WINDOW_PADDING_BOTTOM 5
-#define FINDER_WINDOW_WIDTH          250
-#define FINDER_WINDOW_HEIGHT         ((FINDER_WINDOW_BORDER_RADIUS + FINDER_WINDOW_PADDING_BOTTOM) + (MAX_FILES_ON_SCREEN * FILE_SPACING)) 
-#define FINDER_WINDOW_X              ((GFX_LCD_WIDTH - FINDER_WINDOW_WIDTH) / 2)
-#define FINDER_WINDOW_Y              ((GFX_LCD_HEIGHT - FINDER_WINDOW_HEIGHT) / 2)
+#define FINDER_WINDOW_BORDER_RADIUS     16
+#define FINDER_WINDOW_HEADER_HEIGHT     FINDER_WINDOW_BORDER_RADIUS // a window header height is always equal to the border radius
+#define FINDER_WINDOW_PADDING_BOTTOM    5
+#define FINDER_WINDOW_WIDTH             250
+#define FINDER_WINDOW_HEIGHT            ((FINDER_WINDOW_BORDER_RADIUS + FINDER_WINDOW_PADDING_BOTTOM) + (MAX_FILES_ON_SCREEN * FILE_SPACING)) 
+#define FINDER_WINDOW_X                 ((GFX_LCD_WIDTH - FINDER_WINDOW_WIDTH) / 2)
+#define FINDER_WINDOW_Y                 ((GFX_LCD_HEIGHT - FINDER_WINDOW_HEIGHT) / 2)
+
+#define DELAY_AFTER_FIRST_SCROLL        500
+#define MIN_TIME_BTWN_CONTINOUS_SCROLL  200
 
 struct finder
 {
@@ -33,9 +36,18 @@ struct finder
 	uint8_t fileOffset;
 	uint8_t selectedFile;
 	bool selectedWasPressed;
+	
+	bool prevUp;
+	bool prevDown;
+	
+	// milleseconds since last scroll up
+	float timeSinceScrollUp;
+	// milleseconds since last scroll down
+	float timeSinceScrollDown;
 };
 
 enum programState runFinder(struct finder *finder);
+void initFinder(struct finder *finder);
 
 #ifdef __cplusplus
 }
