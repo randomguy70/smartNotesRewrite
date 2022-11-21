@@ -79,19 +79,23 @@ bool canScrollUp(struct finder *finder)
 	{
 		return false;
 	}
-	
-	if(!finder->prevUp)
-	{
-		return true;
-	}
-	else if(finder->timeSinceScrollUp >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
-	{
-		return true;
-	}
 	else
 	{
-		return false;
+		return true;
 	}
+	
+	//if(!finder->prevUp)
+	//{
+	//	return true;
+	//}
+	//else if(finder->timeSinceScrollUp >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
+	//{
+	//	return true;
+	//}
+	//else
+	//{
+	//	return false;
+	//}
 }
 
 bool canScrollDown(struct finder *finder)
@@ -100,19 +104,23 @@ bool canScrollDown(struct finder *finder)
 	{
 		return false;
 	}
-	
-	if(!finder->prevDown)
-	{
-		return true;
-	}
-	else if(finder->timeSinceScrollDown >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
-	{
-		return true;
-	}
 	else
 	{
-		return false;
+		return true;
 	}
+	
+	//if(!finder->prevDown)
+	//{
+	//	return true;
+	//}
+	//else if(finder->timeSinceScrollDown >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
+	//{
+	//	return true;
+	//}
+	//else
+	//{
+	//	return false;
+	//}
 }
 
 enum programState runFinder(struct finder *finder)
@@ -120,6 +128,7 @@ enum programState runFinder(struct finder *finder)
 	float time = 0;
 	float prevTime = 0;
 	float deltaTime = 0;
+	int fps;
 	
 	initFinder(finder);
 	
@@ -168,6 +177,15 @@ enum programState runFinder(struct finder *finder)
 		time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
 		deltaTime = time - prevTime;
 		prevTime = time;
+		fps = (1 / deltaTime);
+		
+		// FPS meter to experiment with how the TI timers works
+		gfx_SetDrawScreen();
+		gfx_SetColor(black);
+		gfx_FillRectangle_NoClip(0, 0, 30, 10);
+		gfx_SetTextFGColor(white);
+		gfx_SetTextXY(1, 1);
+		gfx_PrintInt(fps, 3);
 		
 		kb_Scan();
 		
