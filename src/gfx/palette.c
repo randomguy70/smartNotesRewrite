@@ -1,4 +1,4 @@
-unsigned char palette[16] =
+unsigned char palette[22] =
 {
     0x10, 0x7c, /*   0: rgb(255,   0, 132) */
     0x00, 0x00, /*   1: rgb(  0,   0,   0) */
@@ -8,4 +8,7 @@ unsigned char palette[16] =
     0x8c, 0xb1, /*   5: rgb( 99, 101,  99) */
     0xb5, 0x56, /*   6: rgb(173, 170, 173) */
     0xff, 0x11, /*   7: rgb( 33, 121, 255) */
+    0x31, 0xc6, /*   8: rgb(140, 142, 140) */
+    0x8c, 0xb1, /*   9: rgb( 99, 101,  99) */
+    0x18, 0xe3, /*  10: rgb(197, 198, 197) */
 };

@@ -5,6 +5,7 @@
 		"graphx.h": "c",
 		"shapes.h": "c",
 		"keypadc.h": "c",
-		"stdint.h": "c"
+		"stdint.h": "c",
+		"stdbool.h": "c"
 	}
 }

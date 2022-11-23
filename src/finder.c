@@ -4,6 +4,7 @@
 #include "shapes.h"
 #include "colors.h"
 #include "main.h"
+#include "menu.h"
 
 #include <graphx.h>
 #include <keypadc.h>
@@ -14,8 +15,8 @@
 void drawFinderBackground(void);
 void drawFinderWindow(struct finder *finder);
 void displayFiles(struct finder *finder);
-bool canScrollUp(struct finder *finder);
-bool canScrollDown(struct finder *finder);
+bool scrollUp(struct finder *finder);
+bool scrollDown(struct finder *finder);
 
 enum programState runFinder(struct finder *finder);
 
@@ -63,71 +64,47 @@ void displayFiles(struct finder *finder)
 
 void initFinder(struct finder *finder)
 {
+	finder->numFiles = loadFiles(finder->files);
 	finder->fileOffset = 0;
 	finder->selectedFile = 0;
 	finder->selectedWasPressed = false;
-	finder->numFiles = loadFiles(finder->files);
-	finder->prevDown = false;
-	finder->prevUp = false;
-	finder->timeSinceScrollUp = 0;
-	finder->timeSinceScrollDown = 0;
+	finder->lastScrollDir = noScrollDir;
+	finder->lastScrollType = noScrollType;
+	finder->timeSinceScroll = 0;
+	finder->menuBar = loadFinderMenuBar();
 }
 
-bool canScrollUp(struct finder *finder)
+bool scrollUp(struct finder *finder)
 {
-	if(!(finder->selectedFile > 0))
-	{
-		return false;
-	}
-	else
+	// up arrow needs to be pressed, and the selector can't be on the first file
+	if(kb_IsDown(kb_KeyUp) && (finder->selectedFile > 0))
 	{
 		return true;
 	}
 	
-	//if(!finder->prevUp)
-	//{
-	//	return true;
-	//}
-	//else if(finder->timeSinceScrollUp >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
-	//{
-	//	return true;
-	//}
-	//else
-	//{
-	//	return false;
-	//}
+	return false;
 }
 
-bool canScrollDown(struct finder *finder)
+bool scrollDown(struct finder *finder)
 {
-	if(!(finder->selectedFile < 30 && finder->selectedFile < finder->numFiles - 1))
+	// need the down key to be pressed, and NOT the up key!!!
+	if(kb_IsDown(kb_KeyDown) && !kb_IsDown(kb_KeyUp))
 	{
-		return false;
-	}
-	else
-	{
-		return true;
+		// if there aren't too many files and the scrollbar isn't on the last one
+		if(finder->selectedFile < 30 && finder->selectedFile < finder->numFiles - 1)
+		{
+			return true;
+		}
 	}
 	
-	//if(!finder->prevDown)
-	//{
-	//	return true;
-	//}
-	//else if(finder->timeSinceScrollDown >= MIN_TIME_BTWN_CONTINOUS_SCROLL)
-	//{
-	//	return true;
-	//}
-	//else
-	//{
-	//	return false;
-	//}
+	return false;
 }
 
 enum programState runFinder(struct finder *finder)
 {
-	float time = 0;
+	float time;
 	float prevTime = 0;
-	float deltaTime = 0;
+	float deltaTime;
 	int fps;
 	
 	initFinder(finder);
@@ -135,6 +112,9 @@ enum programState runFinder(struct finder *finder)
 	gfx_SetDraw(gfx_buffer);
 	drawFinderBackground();
 	drawFinderWindow(finder);
+	drawMenuBar(finder->menuBar);
+	gfx_SetColor(white);
+	roundedRectangleOutlined((320 - 70) / 2, 240 - 15 - 120, 70, 120, 15, white, black);
 	gfx_SwapDraw();
 	
 	// prevent weird background on swapDraw
@@ -143,6 +123,7 @@ enum programState runFinder(struct finder *finder)
 	bool refreshAll = false;
 	bool refreshWindow = false;
 	bool reloadFiles = false;
+	bool refreshMenuBar = false;
 	
 	// reset timer
 	timer_Set(1, 0);
@@ -151,11 +132,14 @@ enum programState runFinder(struct finder *finder)
 	
 	while(1)
 	{
+		// need to figure out optimized order of graphic refresh checks
+		
 		if(refreshAll == true)
 		{
 			gfx_SetDraw(gfx_buffer);
 			drawFinderBackground();
 			drawFinderWindow(finder);
+			drawMenuBar(finder->menuBar);
 			gfx_SwapDraw();
 			
 			refreshAll = false;
@@ -172,17 +156,26 @@ enum programState runFinder(struct finder *finder)
 		if(reloadFiles == true)
 		{
 			finder->numFiles = loadFiles(finder->files);
+			
+			gfx_SetDraw(gfx_buffer);
+			drawFinderWindow(finder);
+			gfx_SwapDraw();
 		}
-		
+		if(refreshMenuBar == true)
+		{
+			gfx_SetDrawBuffer();
+			drawMenuBar(finder->menuBar);
+			gfx_SwapDraw();
+		}
 		time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
 		deltaTime = time - prevTime;
 		prevTime = time;
 		fps = (1 / deltaTime);
 		
-		// FPS meter to experiment with how the TI timers works
+		// FPS meter
 		gfx_SetDrawScreen();
 		gfx_SetColor(black);
-		gfx_FillRectangle_NoClip(0, 0, 30, 10);
+		gfx_FillRectangle_NoClip(0, 0, 50, 10);
 		gfx_SetTextFGColor(white);
 		gfx_SetTextXY(1, 1);
 		gfx_PrintInt(fps, 3);
@@ -193,26 +186,23 @@ enum programState runFinder(struct finder *finder)
 		{
 			return QUIT;
 		}
-		else if(kb_IsDown(kb_KeyUp) && canScrollUp(finder))
+		
+		// scrolling up
+		if(scrollUp(finder))
 		{
 			finder->selectedFile--;
 			if(finder->selectedFile < finder->fileOffset)
 			{
 				finder->fileOffset--;
 			}
-			finder->prevUp = true;
-			finder->timeSinceScrollUp = 0;
 			
+			finder->lastScrollDir = scrollDirUp;
 			refreshWindow = true;
 			continue;
 		}
-		else
-		{
-			finder->timeSinceScrollUp += deltaTime;
-			finder->prevUp = false;
-		}
 		
-		if(kb_IsDown(kb_KeyDown) && canScrollDown(finder))
+		// scrolling down
+		if(scrollDown(finder))
 		{
 			finder->selectedFile++;
 			if(finder->selectedFile >= finder->fileOffset + MAX_FILES_ON_SCREEN)
@@ -220,14 +210,8 @@ enum programState runFinder(struct finder *finder)
 				finder->fileOffset++;
 			}
 			
-			finder->timeSinceScrollDown = 0;
 			refreshWindow = true;
 			continue;
-		}
-		else
-		{
-			finder->timeSinceScrollDown += 1;
-			finder->prevDown = false;
 		}
 	}
 	

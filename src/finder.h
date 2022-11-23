@@ -2,9 +2,9 @@
 #define FINDER_H
 
 #include "file.h"
-#include "stdbool.h"
-#include "stdint.h"
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <graphx.h>
 
 #ifdef __cplusplus
@@ -28,22 +28,22 @@ extern "C" {
 #define DELAY_AFTER_FIRST_SCROLL        500
 #define MIN_TIME_BTWN_CONTINOUS_SCROLL  200
 
+enum scrollDir {noScrollDir, scrollDirUp, scrollDirDown};
+enum scrollType {noScrollType, firstScroll, continuousScroll};
+
 struct finder
 {
 	struct file files[MAX_FILES_LOADABLE];
 	uint8_t numFiles;
-	uint8_t numFilesOnScreen;
 	uint8_t fileOffset;
 	uint8_t selectedFile;
 	bool selectedWasPressed;
 	
-	bool prevUp;
-	bool prevDown;
+	enum scrollDir lastScrollDir;
+	enum scrollType lastScrollType;
+	float timeSinceScroll;
 	
-	// milleseconds since last scroll up
-	float timeSinceScrollUp;
-	// milleseconds since last scroll down
-	float timeSinceScrollDown;
+	struct menuBar *menuBar;
 };
 
 enum programState runFinder(struct finder *finder);

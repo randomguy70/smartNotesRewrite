@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 // index of each color in the gfx pallett
+// I arranged it like this so that I can edit the raw palett index of any color in the (future) settings
 enum color
 {
 	transparent,
@@ -16,6 +17,9 @@ enum color
 	finderWindowOutlineColor,
 	finderWindowBackgroundColor,
 	finderSelectorColor,
+	menuBarBackgroundColor,
+	menuBarEdgeColor,
+	menuBarSelecterColor,
 };
 
 #ifdef __cplusplus
