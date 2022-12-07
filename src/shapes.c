@@ -27,7 +27,7 @@ void roundedRectangle(int x, int y, int width, int height, int borderRadius)
 	gfx_FillRectangle_NoClip(x + width - borderRadius, y + borderRadius, borderRadius, height - 2 * borderRadius);
 }
 
-void roundedRectangleOutlined(int x, int y, int width, int height, int borderRadius, uint8_t bodyColor, uint8_t outlineColor)
+void outlinedRoundedRectangle(int x, int y, int width, int height, int borderRadius, uint8_t bodyColor, uint8_t outlineColor)
 {
 	//---- body corners ----------
 	gfx_SetColor(bodyColor);

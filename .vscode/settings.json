@@ -6,6 +6,12 @@
 		"shapes.h": "c",
 		"keypadc.h": "c",
 		"stdint.h": "c",
-		"stdbool.h": "c"
+		"stdbool.h": "c",
+		"ios": "c",
+		"iosfwd": "c",
+		"locale": "c",
+		"optional": "c",
+		"string": "c",
+		"utility": "c"
 	}
 }

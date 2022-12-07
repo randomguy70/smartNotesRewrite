@@ -46,8 +46,11 @@ struct finder
 	struct menuBar *menuBar;
 };
 
-enum programState runFinder(struct finder *finder);
-void initFinder(struct finder *finder);
+extern struct finder finder;
+
+enum programState runFinder(void);
+void initFinder(void);
+void refreshAllFinderGraphics(void);
 
 #ifdef __cplusplus
 }

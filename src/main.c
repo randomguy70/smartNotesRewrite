@@ -13,11 +13,13 @@
 bool init();
 void cleanup();
 
+struct finder finder;
+
 int main(void)
 {
 	if(init() == false) {return 0;}
 	
-	struct finder finder;
+	initFinder();
 	enum programState state = FINDER;
 	
 	// generate files for testing
@@ -35,7 +37,7 @@ int main(void)
 	{
 		if(state == FINDER)
 		{
-			state = runFinder(&finder);
+			state = runFinder();
 		}
 		if(state == QUIT)
 		{

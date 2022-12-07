@@ -17,9 +17,16 @@ enum color
 	finderWindowOutlineColor,
 	finderWindowBackgroundColor,
 	finderSelectorColor,
+	finderWindowTextColor,
+	finderWindowSelectedTextColor,
 	menuBarBackgroundColor,
 	menuBarEdgeColor,
 	menuBarSelecterColor,
+	menuWindowBackgroundColor,
+	menuWindowOutlineColor,
+	menuWindowSelectorColor,
+	menuWindowTextColor,
+	menuWindowSelectedTextColor,
 };
 
 #ifdef __cplusplus

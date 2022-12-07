@@ -5,7 +5,14 @@
 extern "C" {
 #endif
 
-enum programState {FINDER, EDITOR, SETTINGS, QUIT};
+/**
+ * FINDER: request to run the finder
+ * EDITOR: request to run the editor
+ * SETTINGS: request to run settings
+ * CANCEL: request to go back a scope (exit a menu, cancel a window, etc...)
+ * QUIT: request to quit the program
+**/
+enum programState {FINDER, EDITOR, SETTINGS, CANCEL, QUIT};
 
 #ifdef __cplusplus
 }

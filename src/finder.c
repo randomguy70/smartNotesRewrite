@@ -13,12 +13,10 @@
 #include <sys/timers.h>
 
 void drawFinderBackground(void);
-void drawFinderWindow(struct finder *finder);
-void displayFiles(struct finder *finder);
-bool scrollUp(struct finder *finder);
-bool scrollDown(struct finder *finder);
-
-enum programState runFinder(struct finder *finder);
+void drawFinderWindow();
+void displayFiles();
+bool scrollUp();
+bool scrollDown();
 
 void drawFinderBackground(void)
 {
@@ -27,7 +25,7 @@ void drawFinderBackground(void)
 	gfx_FillRectangle_NoClip(0, 0, GFX_LCD_WIDTH, GFX_LCD_HEIGHT);
 }
 
-void drawFinderWindow(struct finder *finder)
+void drawFinderWindow()
 {
 	// draw window & title
 	window(FINDER_WINDOW_X, FINDER_WINDOW_Y, FINDER_WINDOW_WIDTH, FINDER_WINDOW_HEIGHT, FINDER_WINDOW_BORDER_RADIUS, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor);
@@ -35,19 +33,19 @@ void drawFinderWindow(struct finder *finder)
 	gfx_SetTextFGColor(black);
 	gfx_PrintStringXY(finderWindowName, GFX_LCD_WIDTH / 2 - gfx_GetStringWidth(finderWindowName) / 2, FINDER_WINDOW_Y + 5);
 	
-	displayFiles(finder);
+	displayFiles();
 }
 
-void displayFiles(struct finder *finder)
+void displayFiles()
 {
 	int fileEntryX = FINDER_WINDOW_X + FILE_NAME_PADDING_LEFT;
 	int fileEntryY = FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + (FILE_SPACING - 8) / 2;
 	
 	gfx_SetTextFGColor(black);
 	
-	for(uint8_t i = finder->fileOffset, count = 0; count < MAX_FILES_ON_SCREEN && i < finder->numFiles; i++, count++)
+	for(uint8_t i = finder.fileOffset, count = 0; count < MAX_FILES_ON_SCREEN && i < finder.numFiles; i++, count++)
 	{
-		if(i == finder->selectedFile)
+		if(i == finder.selectedFile)
 		{
 			gfx_SetColor(finderSelectorColor);
 			chippedRectangle(FINDER_WINDOW_X + FILE_ENTRY_PADDING_LEFT, FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + count * FILE_SPACING, FILE_ENTRY_WIDTH, FILE_SPACING);
@@ -57,27 +55,27 @@ void displayFiles(struct finder *finder)
 		{
 			gfx_SetTextFGColor(black);
 		}
-		gfx_PrintStringXY(finder->files[i].name, fileEntryX, fileEntryY);
+		gfx_PrintStringXY(finder.files[i].name, fileEntryX, fileEntryY);
 		fileEntryY += FILE_SPACING;
 	}
 }
 
-void initFinder(struct finder *finder)
+void initFinder(void)
 {
-	finder->numFiles = loadFiles(finder->files);
-	finder->fileOffset = 0;
-	finder->selectedFile = 0;
-	finder->selectedWasPressed = false;
-	finder->lastScrollDir = noScrollDir;
-	finder->lastScrollType = noScrollType;
-	finder->timeSinceScroll = 0;
-	finder->menuBar = loadFinderMenuBar();
+	finder.numFiles = loadFiles(finder.files);
+	finder.fileOffset = 0;
+	finder.selectedFile = 0;
+	finder.selectedWasPressed = false;
+	finder.lastScrollDir = noScrollDir;
+	finder.lastScrollType = noScrollType;
+	finder.timeSinceScroll = 0;
+	finder.menuBar = loadFinderMenuBar();
 }
 
-bool scrollUp(struct finder *finder)
+bool scrollUp()
 {
 	// up arrow needs to be pressed, and the selector can't be on the first file
-	if(kb_IsDown(kb_KeyUp) && (finder->selectedFile > 0))
+	if(kb_IsDown(kb_KeyUp) && (finder.selectedFile > 0))
 	{
 		return true;
 	}
@@ -85,13 +83,13 @@ bool scrollUp(struct finder *finder)
 	return false;
 }
 
-bool scrollDown(struct finder *finder)
+bool scrollDown()
 {
 	// need the down key to be pressed, and NOT the up key!!!
 	if(kb_IsDown(kb_KeyDown) && !kb_IsDown(kb_KeyUp))
 	{
 		// if there aren't too many files and the scrollbar isn't on the last one
-		if(finder->selectedFile < 30 && finder->selectedFile < finder->numFiles - 1)
+		if(finder.selectedFile < 30 && finder.selectedFile < finder.numFiles - 1)
 		{
 			return true;
 		}
@@ -100,25 +98,23 @@ bool scrollDown(struct finder *finder)
 	return false;
 }
 
-enum programState runFinder(struct finder *finder)
+void refreshAllFinderGraphics(void)
+{
+	gfx_SetDrawBuffer();
+	drawFinderBackground();
+	drawFinderWindow(&finder);
+	drawMenuBar(finder.menuBar);
+	gfx_Blit(gfx_buffer);
+}
+
+enum programState runFinder(void)
 {
 	float time;
 	float prevTime = 0;
 	float deltaTime;
 	int fps;
 	
-	initFinder(finder);
-	
-	gfx_SetDraw(gfx_buffer);
-	drawFinderBackground();
-	drawFinderWindow(finder);
-	drawMenuBar(finder->menuBar);
-	gfx_SetColor(white);
-	roundedRectangleOutlined((320 - 70) / 2, 240 - 15 - 120, 70, 120, 15, white, black);
-	gfx_SwapDraw();
-	
-	// prevent weird background on swapDraw
-	gfx_Blit(gfx_screen);
+	refreshAllFinderGraphics();
 	
 	bool refreshAll = false;
 	bool refreshWindow = false;
@@ -136,49 +132,51 @@ enum programState runFinder(struct finder *finder)
 		
 		if(refreshAll == true)
 		{
-			gfx_SetDraw(gfx_buffer);
-			drawFinderBackground();
-			drawFinderWindow(finder);
-			drawMenuBar(finder->menuBar);
-			gfx_SwapDraw();
-			
 			refreshAll = false;
 			refreshWindow = false;
+			refreshMenuBar = false;
+			refreshAllFinderGraphics(&finder);
 		}
 		else if(refreshWindow == true)
 		{
-			gfx_SetDraw(gfx_buffer);
-			drawFinderWindow(finder);
-			gfx_SwapDraw();
-			
 			refreshWindow = false;
+			
+			gfx_SetDraw(gfx_buffer);
+			drawFinderWindow(&finder);
+			gfx_Blit(gfx_buffer);
 		}
 		if(reloadFiles == true)
 		{
-			finder->numFiles = loadFiles(finder->files);
+			reloadFiles = false;
+			finder.numFiles = loadFiles(finder.files);
 			
 			gfx_SetDraw(gfx_buffer);
-			drawFinderWindow(finder);
-			gfx_SwapDraw();
+			drawFinderWindow(&finder);
+			gfx_Blit(gfx_buffer);
 		}
 		if(refreshMenuBar == true)
 		{
+			refreshMenuBar = false;
+			
 			gfx_SetDrawBuffer();
-			drawMenuBar(finder->menuBar);
-			gfx_SwapDraw();
+			drawMenuBar(finder.menuBar);
+			gfx_Blit(gfx_buffer);
 		}
+		
+		// FPS meter (takes off more than 20 fps)
+		
 		time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
 		deltaTime = time - prevTime;
 		prevTime = time;
-		fps = (1 / deltaTime);
+		fps = (int)(1 / deltaTime);
 		
-		// FPS meter
-		gfx_SetDrawScreen();
+		gfx_SetDrawBuffer();
 		gfx_SetColor(black);
 		gfx_FillRectangle_NoClip(0, 0, 50, 10);
 		gfx_SetTextFGColor(white);
 		gfx_SetTextXY(1, 1);
 		gfx_PrintInt(fps, 3);
+		gfx_BlitRectangle(gfx_buffer, 0, 0, 50, 10);
 		
 		kb_Scan();
 		
@@ -188,30 +186,48 @@ enum programState runFinder(struct finder *finder)
 		}
 		
 		// scrolling up
-		if(scrollUp(finder))
+		if(scrollUp())
 		{
-			finder->selectedFile--;
-			if(finder->selectedFile < finder->fileOffset)
+			finder.selectedFile--;
+			if(finder.selectedFile < finder.fileOffset)
 			{
-				finder->fileOffset--;
+				finder.fileOffset--;
 			}
 			
-			finder->lastScrollDir = scrollDirUp;
+			finder.lastScrollDir = scrollDirUp;
 			refreshWindow = true;
 			continue;
 		}
 		
 		// scrolling down
-		if(scrollDown(finder))
+		if(scrollDown())
 		{
-			finder->selectedFile++;
-			if(finder->selectedFile >= finder->fileOffset + MAX_FILES_ON_SCREEN)
+			finder.selectedFile++;
+			if(finder.selectedFile >= finder.fileOffset + MAX_FILES_ON_SCREEN)
 			{
-				finder->fileOffset++;
+				finder.fileOffset++;
 			}
 			
 			refreshWindow = true;
 			continue;
+		}
+		
+		// check for menu bar press
+		if(menuBarWasPressed())
+		{
+			int menuIndex = getMenuBarPress();
+			if(menuIndex == -1)
+			{
+				continue;
+			}
+			// XXX add action requests for menu bar
+			else if(menuIndex == 0 || menuIndex == 1 || menuIndex == 2)
+			{
+				break;
+			}
+			
+			runMenuBar(finder.menuBar, menuIndex);
+			refreshAll = true;
 		}
 	}
 	

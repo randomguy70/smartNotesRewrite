@@ -13,7 +13,7 @@ extern "C" {
 void roundedRectangle(int x, int y, int width, int height, int borderRadius);
 
 // fills a rectangle & gives it a separate border color
-void roundedRectangleOutlined(int x, int y, int width, int height, int borderRadius, uint8_t bodyColor, uint8_t outlineColor);
+void outlinedRoundedRectangle(int x, int y, int width, int height, int borderRadius, uint8_t bodyColor, uint8_t outlineColor);
 
 // rounded window with outline and header
 void window(int x, int y, int width, int height, int borderRadius, enum color headerColor, enum color bodyColor, enum color outlineColor);
