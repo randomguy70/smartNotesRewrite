@@ -102,7 +102,7 @@ void refreshAllFinderGraphics(void)
 {
 	gfx_SetDrawBuffer();
 	drawFinderBackground();
-	drawFinderWindow(&finder);
+	drawFinderWindow();
 	drawMenuBar(finder.menuBar);
 	gfx_Blit(gfx_buffer);
 }
@@ -135,14 +135,14 @@ enum programState runFinder(void)
 			refreshAll = false;
 			refreshWindow = false;
 			refreshMenuBar = false;
-			refreshAllFinderGraphics(&finder);
+			refreshAllFinderGraphics();
 		}
 		else if(refreshWindow == true)
 		{
 			refreshWindow = false;
 			
 			gfx_SetDraw(gfx_buffer);
-			drawFinderWindow(&finder);
+			drawFinderWindow();
 			gfx_Blit(gfx_buffer);
 		}
 		if(reloadFiles == true)
@@ -151,7 +151,7 @@ enum programState runFinder(void)
 			finder.numFiles = loadFiles(finder.files);
 			
 			gfx_SetDraw(gfx_buffer);
-			drawFinderWindow(&finder);
+			drawFinderWindow();
 			gfx_Blit(gfx_buffer);
 		}
 		if(refreshMenuBar == true)
