@@ -24,11 +24,13 @@ int main(void)
 	
 	// generate files for testing
 	char *names[] = {"One", "Two", "Three","Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen"};
+	char text[] = "qwe rtyuiopa sdfghjkl zxcvbnhgjgfjghj,gfjkgjf 5678uyhjkgftyuihgj";
 	
 	for(int i = 0; i < 15; i++)
 	{
 		uint8_t file = ti_Open(names[i], "w+");
 		ti_Write(FILE_DETECT_STRING, sizeof(FILE_DETECT_STRING) - 1, 1, file);
+		ti_Write(text, 65, 1, file);
 		ti_SetArchiveStatus(true, file);
 		ti_Close(file);
 	}

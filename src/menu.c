@@ -146,7 +146,7 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 		else if(menuBarWasPressed())
 		{
 			int newIndex = getMenuBarPress();
-			if(newIndex != -1 && newIndex != activeIndex)
+			if(newIndex != -1 && newIndex != activeIndex && menuBar->menues[newIndex].numOptions > 0)
 			{
 				activeIndex = newIndex;
 				menu = &menuBar->menues[newIndex];
