@@ -14,6 +14,8 @@ extern "C" {
 **/
 enum programState {FINDER, EDITOR, SETTINGS, CANCEL, QUIT};
 
+extern enum programState programState;
+
 #ifdef __cplusplus
 }
 #endif

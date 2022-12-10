@@ -20,8 +20,10 @@ extern "C" {
 #define MENU_HORIZ_SPACING        (GFX_LCD_WIDTH / NUM_MENU_BAR_ENTRIES)
 #define MENU_ENTRY_VERT_SPACING   12
 #define MAX_MENU_ENTRIES_ON_SCRN  7
+#define MENU_PADDING_TOP          1
+#define MENU_PADDING_BOTTOM       1
 #define MENU_WIDTH                100
-#define MAX_MENU_HEIGHT           (MENU_ENTRY_VERT_SPACING * MAX_MENU_ENTRIES_ON_SCRN) + 2
+#define MAX_MENU_HEIGHT           (MENU_ENTRY_VERT_SPACING * MAX_MENU_ENTRIES_ON_SCRN) + 2 + (MENU_PADDING_TOP + MENU_PADDING_BOTTOM)
 #define MENU_ENTRY_PADDING_LEFT   (MENU_BORDER_RADIUS - 2)
 #define MENU_ENTRY_PADDING_RIGHT  (MENU_BORDER_RADIUS - 2)
 #define MENU_TEXT_PADDING_LEFT    5
@@ -44,11 +46,14 @@ struct menuBar
 	struct menu menues[5];
 };
 
-// does what it says
-void drawMenuBar(struct menuBar *menuBar);
+/***
+ * @param menuBar     Pointer to a menu bar struct returned from a menu bar loader function
+ * @param activeIndex Index of menu being run. If no menu is being run, pass -1 instead. This is used to color the button under an active menu.
+*/
+void drawMenuBar(struct menuBar *menuBar, int activeIndex);
 
 // runs a menu bar and allows for switching between all 5 menu bar options
-enum programState runMenuBar(struct menuBar *menuBar, uint8_t menuIndex);
+enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex);
 
 // returns a pointer to static menubar struct
 struct menuBar *loadFinderMenuBar(void);
@@ -58,7 +63,7 @@ int getMenuBarPress(void);
 
 bool menuBarWasPressed(void);
 
-void drawMenu(struct menu *menu, uint8_t menuIndex);
+void drawMenu(struct menu *menu, uint8_t activeIndex);
 
 #ifdef __cplusplus
 }

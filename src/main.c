@@ -14,13 +14,13 @@ bool init();
 void cleanup();
 
 struct finder finder;
+enum programState programState = FINDER;
 
 int main(void)
 {
 	if(init() == false) {return 0;}
 	
 	initFinder();
-	enum programState state = FINDER;
 	
 	// generate files for testing
 	char *names[] = {"One", "Two", "Three","Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen"};
@@ -35,11 +35,11 @@ int main(void)
 	
 	while(1)
 	{
-		if(state == FINDER)
+		if(programState == FINDER)
 		{
-			state = runFinder();
+			programState = runFinder();
 		}
-		if(state == QUIT)
+		if(programState == QUIT)
 		{
 			break;
 		}

@@ -103,7 +103,7 @@ void refreshAllFinderGraphics(void)
 	gfx_SetDrawBuffer();
 	drawFinderBackground();
 	drawFinderWindow();
-	drawMenuBar(finder.menuBar);
+	drawMenuBar(finder.menuBar, -1);
 	gfx_Blit(gfx_buffer);
 }
 
@@ -159,7 +159,7 @@ enum programState runFinder(void)
 			refreshMenuBar = false;
 			
 			gfx_SetDrawBuffer();
-			drawMenuBar(finder.menuBar);
+			drawMenuBar(finder.menuBar, -1);
 			gfx_Blit(gfx_buffer);
 		}
 		
@@ -215,18 +215,18 @@ enum programState runFinder(void)
 		// check for menu bar press
 		if(menuBarWasPressed())
 		{
-			int menuIndex = getMenuBarPress();
-			if(menuIndex == -1)
+			int activeIndex = getMenuBarPress();
+			if(activeIndex == -1)
 			{
 				continue;
 			}
 			// XXX add action requests for menu bar
-			else if(menuIndex == 0 || menuIndex == 1 || menuIndex == 2)
+			else if(activeIndex == 0 || activeIndex == 1 || activeIndex == 2)
 			{
 				break;
 			}
 			
-			runMenuBar(finder.menuBar, menuIndex);
+			runMenuBar(finder.menuBar, activeIndex);
 			refreshAll = true;
 		}
 	}

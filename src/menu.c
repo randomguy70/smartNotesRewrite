@@ -1,5 +1,6 @@
 #include "menu.h"
 
+#include "finder.h"
 #include "colors.h"
 #include "shapes.h"
 #include "main.h"
@@ -8,10 +9,8 @@
 #include <keypadc.h>
 #include <stdint.h>
 
-int updateMenu(struct menu *menu);
 
-
-void drawMenuBar(struct menuBar *menuBar)
+void drawMenuBar(struct menuBar *menuBar, int activeIndex)
 {
 	int spacing = GFX_LCD_WIDTH / NUM_MENU_BAR_ENTRIES;
 	// testing
@@ -34,7 +33,7 @@ void drawMenuBar(struct menuBar *menuBar)
 	// display option names
 	for(int i = 0; i < NUM_MENU_BAR_ENTRIES; i++)
 	{
-		if(pressedButton == i)
+		if(pressedButton == i || activeIndex == i)
 		{
 			selecterX = (i * spacing);
 			selecterY = GFX_LCD_HEIGHT - MENU_BAR_HEIGHT + 1;
@@ -48,39 +47,108 @@ void drawMenuBar(struct menuBar *menuBar)
 	}
 }
 
-enum programState runMenuBar(struct menuBar *menuBar, uint8_t menuIndex)
+enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 {
-	int action;
+	struct menu *menu = &menuBar->menues[activeIndex];
+	bool redrawBackground = false;
+	bool redrawForeground = false;
 	
 	gfx_SetDrawBuffer();
-	drawMenuBar(menuBar);
-	drawMenu(&menuBar->menues[menuIndex], menuIndex);
+	drawMenuBar(menuBar, activeIndex);
+	drawMenu(menu, activeIndex);
 	gfx_Blit(gfx_buffer);
 	
 	while(1)
 	{
-		action = updateMenu(&menuBar->menues[menuIndex]);
+		// graphics
 		
-		
-		if(action == 0)
+		if(redrawBackground)
 		{
-			return CANCEL;
+			redrawBackground = false;
+			
+			if(programState == FINDER)
+			{
+				refreshAllFinderGraphics();
+			}
 		}
-		else if(action == 1)
+		if(redrawForeground)
 		{
+			redrawForeground = false;
+			
 			gfx_SetDrawBuffer();
-			drawMenuBar(menuBar);
-			drawMenu(&menuBar->menues[menuIndex], menuIndex);
+			drawMenuBar(menuBar, activeIndex);
+			drawMenu(menu, activeIndex);
 			gfx_Blit(gfx_buffer);
+		}
+		
+		kb_Scan();
+		
+		// quit menu
+		if(kb_IsDown(kb_KeyClear))
+		{
+			while(kb_IsDown(kb_KeyClear)) kb_Scan();
+			return 0;
+		}
+		
+		// scroll up
+		else if(kb_IsDown(kb_KeyUp) && menu->selected > 0)
+		{
+			menu->selected--;
+			if(menu->selected < menu->displayOffset)
+			{
+				menu->displayOffset--;
+			}
+			
+			redrawForeground = true;
+		}
+		
+		// scroll down
+		else if(kb_IsDown(kb_KeyDown) && menuBar->menues[activeIndex].selected < menu->numOptions - 1)
+		{
+			menu->selected++;
+			if(menu->selected >= menu->displayOffset + MAX_MENU_ENTRIES_ON_SCRN)
+			{
+				menu->displayOffset++;
+			}
+			
+			redrawForeground = true;
+		}
+		
+		// switch 1 menu left
+		else if(kb_IsDown(kb_KeyLeft) && activeIndex > 0)
+		{
+			if(menuBar->menues[activeIndex - 1].numOptions > 0)
+			{
+				activeIndex--;
+				menu = &menuBar->menues[activeIndex];
+				
+				redrawBackground = true;
+				redrawForeground = true;
+			}
+		}
+		
+		// switch 1 menu right
+		else if(kb_IsDown(kb_KeyRight) && activeIndex + 1 < NUM_MENU_BAR_ENTRIES)
+		{
+			if(menuBar->menues[activeIndex + 1].numOptions > 0)
+			{
+				activeIndex++;
+				menu = &menuBar->menues[activeIndex];
+				
+				redrawBackground = true;
+				redrawForeground = true;
+			}
+			
+			continue;
 		}
 	}
 }
 
-void drawMenu(struct menu *menu, uint8_t menuIndex)
+void drawMenu(struct menu *menu, uint8_t activeIndex)
 {
 	const int height = (menu->numOptions >= MAX_MENU_ENTRIES_ON_SCRN) ? (MAX_MENU_HEIGHT) : (MENU_ENTRY_VERT_SPACING * menu->numOptions);
-	int menuX = MENU_BAR_ENTRY_SPACING * menuIndex + ((MENU_BAR_ENTRY_SPACING - MENU_WIDTH) / 2);
-	int menuY = GFX_LCD_HEIGHT - MENU_BAR_HEIGHT - height;
+	int menuX = MENU_BAR_ENTRY_SPACING * activeIndex + ((MENU_BAR_ENTRY_SPACING - MENU_WIDTH) / 2);
+	int menuY = GFX_LCD_HEIGHT - MENU_BAR_HEIGHT - height - 1;
 	
 	// make sure the menu stays on the screen
 	if(menuX + MENU_WIDTH >= GFX_LCD_WIDTH)
@@ -93,7 +161,7 @@ void drawMenu(struct menu *menu, uint8_t menuIndex)
 	}
 	
 	int menuEntryX = menuX + MENU_ENTRY_PADDING_LEFT;
-	int menuEntryY = menuY + 1;
+	int menuEntryY = menuY + 1 + MENU_PADDING_TOP;
 	int menuTextX = menuEntryX + MENU_TEXT_PADDING_LEFT;
 	int menuTextY = menuEntryY + 2;
 	outlinedRoundedRectangle(menuX, menuY, MENU_WIDTH, height, MENU_BORDER_RADIUS, menuWindowBackgroundColor, menuWindowOutlineColor);
@@ -114,19 +182,6 @@ void drawMenu(struct menu *menu, uint8_t menuIndex)
 		menuEntryY += MENU_ENTRY_VERT_SPACING;
 		menuTextY += MENU_ENTRY_VERT_SPACING;
 	}
-}
-
-int updateMenu(struct menu *menu)
-{
-	kb_Scan();
-	
-	if(kb_IsDown(kb_KeyClear))
-	{
-		while(kb_IsDown(kb_KeyClear)) kb_Scan();
-		return 0;
-	}
-	
-	return 2;
 }
 
 bool menuBarWasPressed(void)
