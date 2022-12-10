@@ -141,6 +141,20 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 			
 			continue;
 		}
+		
+		// jump to menu with button press
+		else if(menuBarWasPressed())
+		{
+			int newIndex = getMenuBarPress();
+			if(newIndex != -1 && newIndex != activeIndex)
+			{
+				activeIndex = newIndex;
+				
+				redrawBackground = true;
+				redrawForeground = true;
+			}
+		}
+		
 	}
 }
 
