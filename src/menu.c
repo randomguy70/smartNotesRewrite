@@ -149,12 +149,12 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 			if(newIndex != -1 && newIndex != activeIndex)
 			{
 				activeIndex = newIndex;
+				menu = &menuBar->menues[newIndex];
 				
 				redrawBackground = true;
 				redrawForeground = true;
 			}
 		}
-		
 	}
 }
 
