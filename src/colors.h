@@ -9,9 +9,12 @@ extern "C" {
 // I arranged it like this so that I can edit the raw palett index of any color in the (future) settings
 enum color
 {
+	// finder
+	
 	transparent,
 	black,
 	white,
+	
 	finderWindowHeaderColor,
 	finderWindowBodyColor,
 	finderWindowOutlineColor,
@@ -19,6 +22,7 @@ enum color
 	finderSelectorColor,
 	finderWindowTextColor,
 	finderWindowSelectedTextColor,
+	
 	menuBarBackgroundColor,
 	menuBarEdgeColor,
 	menuBarSelecterColor,
@@ -27,6 +31,10 @@ enum color
 	menuWindowSelectorColor,
 	menuWindowTextColor,
 	menuWindowSelectedTextColor,
+	
+	editorBackgroundColor = 30,
+	editorHeaderBarBackgroundColor,
+	editorHeaderBarBorderColor,
 };
 
 #ifdef __cplusplus

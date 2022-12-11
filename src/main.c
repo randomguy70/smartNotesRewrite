@@ -4,6 +4,7 @@
 #include "colors.h"
 #include "gfx/gfx.h"
 #include "finder.h"
+#include "editor.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -14,6 +15,8 @@ bool init();
 void cleanup();
 
 struct finder finder;
+struct editor editor;
+
 enum programState programState = FINDER;
 
 int main(void)
@@ -35,15 +38,17 @@ int main(void)
 		ti_Close(file);
 	}
 	
-	while(1)
+	while(programState != QUIT)
 	{
-		if(programState == FINDER)
+		switch(programState)
 		{
-			programState = runFinder();
-		}
-		if(programState == QUIT)
-		{
-			break;
+			case FINDER:
+				programState = runFinder();
+				break;
+			case EDITOR:
+				programState = runEditor();
+			default:
+				break;
 		}
 	}
 	
@@ -55,6 +60,9 @@ bool init()
 {
 	gfx_Begin();
 	gfx_SetPalette(palette, sizeof(palette), myimages_palette_offset);
+	gfx_SetTransparentColor(transparent);
+	gfx_SetTextTransparentColor(transparent);
+	gfx_SetTextBGColor(transparent);
 	
 	return true;
 }

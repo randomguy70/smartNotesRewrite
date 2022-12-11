@@ -180,9 +180,16 @@ enum programState runFinder(void)
 		
 		kb_Scan();
 		
+		// quit
 		if(kb_IsDown(kb_KeyClear))
 		{
 			return QUIT;
+		}
+		
+		// open file
+		if(kb_IsDown(kb_KeyEnter))
+		{
+			return EDITOR;
 		}
 		
 		// scrolling up
@@ -232,4 +239,55 @@ enum programState runFinder(void)
 	}
 	
 	return QUIT;
+}
+
+struct menuBar *loadFinderMenuBar(void)
+{
+	static struct menuBar menuBar = 
+	{
+		.menues = 
+		{
+			{
+				.name = "Exit",
+				.numOptions = 0
+			},
+			{
+				.name = "Help",
+				.numOptions = 0,
+			},
+			{
+				.name = "Settings",
+				.numOptions = 0,
+			},
+			{
+				.name = "File",
+				.numOptions = 6,
+				.options = 
+				{
+					"New",
+					"Open",
+					"Rename",
+					"Hide",
+					"Info",
+					"Delete",
+				}
+			},
+			{
+				.name = "Edit",
+				.numOptions = 7,
+				.options = 
+				{
+					"Search",
+					"Some",
+					"Random",
+					"Thing",
+					"For",
+					"No",
+					"Reason",
+				}
+			}
+		}
+	};
+	
+	return &menuBar;
 }

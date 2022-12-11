@@ -51,6 +51,7 @@ extern struct finder finder;
 enum programState runFinder(void);
 void initFinder(void);
 void refreshAllFinderGraphics(void);
+struct menuBar *loadFinderMenuBar(void);
 
 #ifdef __cplusplus
 }

@@ -164,14 +164,14 @@ void drawMenu(struct menu *menu, uint8_t activeIndex)
 	int menuX = MENU_BAR_ENTRY_SPACING * activeIndex + ((MENU_BAR_ENTRY_SPACING - MENU_WIDTH) / 2);
 	int menuY = GFX_LCD_HEIGHT - MENU_BAR_HEIGHT - height - 1;
 	
-	// make sure the menu stays on the screen
-	if(menuX + MENU_WIDTH >= GFX_LCD_WIDTH)
+	// make sure the menu stays on the screen (with 1 pixel margin)
+	if(menuX + MENU_WIDTH >= GFX_LCD_WIDTH - 1)
 	{
-		menuX = GFX_LCD_WIDTH - MENU_WIDTH;
+		menuX = GFX_LCD_WIDTH - MENU_WIDTH - 1;
 	}
-	else if(menuX < 0)
+	else if(menuX < 1)
 	{
-		menuX = 0;
+		menuX = 1;
 	}
 	
 	int menuEntryX = menuX + MENU_ENTRY_PADDING_LEFT;
@@ -225,55 +225,4 @@ int getMenuBarPress(void)
 	}
 	
 	return -1;
-}
-
-struct menuBar *loadFinderMenuBar(void)
-{
-	static struct menuBar menuBar = 
-	{
-		.menues = 
-		{
-			{
-				.name = "Exit",
-				.numOptions = 0
-			},
-			{
-				.name = "Help",
-				.numOptions = 0,
-			},
-			{
-				.name = "Settings",
-				.numOptions = 0,
-			},
-			{
-				.name = "File",
-				.numOptions = 6,
-				.options = 
-				{
-					"New",
-					"Open",
-					"Rename",
-					"Hide",
-					"Info",
-					"Delete",
-				}
-			},
-			{
-				.name = "Edit",
-				.numOptions = 7,
-				.options = 
-				{
-					"Search",
-					"Some",
-					"Random",
-					"Thing",
-					"For",
-					"No",
-					"Reason",
-				}
-			}
-		}
-	};
-	
-	return &menuBar;
 }

@@ -55,9 +55,6 @@ void drawMenuBar(struct menuBar *menuBar, int activeIndex);
 // runs a menu bar and allows for switching between all 5 menu bar options
 enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex);
 
-// returns a pointer to static menubar struct
-struct menuBar *loadFinderMenuBar(void);
-
 // returns -1 if failure, otherwise returns the index of the menu bar option to open
 int getMenuBarPress(void);
 

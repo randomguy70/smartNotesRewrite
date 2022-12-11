@@ -12,6 +12,9 @@
 		"locale": "c",
 		"optional": "c",
 		"string": "c",
-		"utility": "c"
+		"utility": "c",
+		"gfx.h": "c",
+		"finder.h": "c",
+		"palette.h": "c"
 	}
 }
