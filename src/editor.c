@@ -9,14 +9,56 @@
 #include "graphx.h"
 #include "fileioc.h"
 #include "keypadc.h"
+#include "fontlibc.h"
+
+// DEBUG
+#include "string.h"
+
+void initEditor()
+{
+	editor.menuBar = loadEditorMenuBar();
+	
+	// wipe text buffer (XXX)
+	for (int i = 0; i < MAX_DATA_SIZE; i++)
+	{
+		editor.buffer[i] = 0;
+	}
+	
+	// keep track of memory
+	
+	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
+	editor.cursorPos = 0;
+	editor.dataSize = 0;
+	editor.file = NULL;
+}
 
 enum programState runEditor()
 {
 	editor.file = &finder.files[finder.fileOffset];
 	loadFileData(editor.file);
 	
-	initEditor();
-	drawEditor();
+	// DEBUG
+	char str[100] = {'\0'};
+	strcpy(str, "This is a sentence");
+	strcpy(editor.buffer, str);
+	editor.dataSize = strlen(str);
+	
+	if(programState == QUIT)
+	{
+		return QUIT;
+	}
+	
+	// DEBUG
+	// drawEditor();
+	gfx_SetDraw(gfx_buffer);
+	gfx_FillScreen(white);
+	gfx_SetTextFGColor(black);
+	
+	gfx_HorizLine(0, 10, fontlib_GetStringWidth("Four"));
+	fontlib_SetCursorPosition(0, 11);
+	fontlib_DrawString("Four");
+	
+	gfx_Blit(gfx_buffer);
 	
 	while(!(programState == QUIT))
 	{
@@ -49,7 +91,7 @@ void drawEditorBackground()
 }
 
 void drawEditorText()
-{	
+{
 	
 }
 
@@ -59,11 +101,6 @@ void drawEditor()
 	drawEditorBackground();
 	drawEditorText();
 	gfx_Blit(gfx_buffer);
-}
-
-void initEditor()
-{
-	editor.menuBar = loadEditorMenuBar();
 }
 
 struct menuBar *loadEditorMenuBar()
@@ -120,4 +157,62 @@ struct menuBar *loadEditorMenuBar()
 	};
 	
 	return &menuBar;
+}
+
+void editor_GetLineLen(char *readPos, int *lenBuffer)
+{
+	
+}
+
+void editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
+{
+	int len = 0;
+	int width = 0;
+	bool beforeCursor;
+	char character;
+	
+	// make sure readPos is within the text buffer
+	
+	if (readPos < editor.buffer || readPos > editor.bufferEnd)
+	{
+		return;
+	}
+	
+	// check if we have read past the cursor yet
+	
+	if (readPos < editor.buffer + editor.cursorPos)
+	{
+		beforeCursor = true;
+	}
+	else
+	{
+		beforeCursor = false;
+	}
+	
+	while (readPos <= editor.bufferEnd)
+	{
+		character = *readPos;
+		
+		if (character != ' ' && character != '\n' && character != '\0')
+		{
+			readPos++;
+			len++;
+			width += gfx_GetCharWidth(character);
+		}
+		else
+		{
+			break;
+		}
+		
+		if (beforeCursor && readPos >= editor.buffer + editor.cursorPos)
+		{
+			beforeCursor = false;
+			readPos = (editor.bufferEnd - editor.dataSize + editor.cursorPos) + 1;
+		}
+	}
+	
+	*lenBuffer = len;
+	*widthBuffer = width;
+	
+	return;
 }

@@ -41,35 +41,32 @@ uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
 
 void loadFileData(struct file *file)
 {
-	// wipe the editor buffers
-	for(int i = 0; i < MAX_DATA_SIZE; i++)
-	{
-		editor.buffer1[i] = 0;
-	}
-	// wipe the editor buffers
-	for(int i = 0; i < MAX_DATA_SIZE; i++)
-	{
-		editor.buffer2[i] = 0;
-	}
+	// check if it exists
 	
 	uint8_t slot = ti_Open(file->name, "r");
 	if(!slot)
 	{
-		programState = QUIT; // should be caught before a crash ¯_(ツ)_/¯
+		programState = QUIT;
 		return;
 	}
+	
+	// get file size and make sure it doesn't exceed the maximum
 	
 	file->size = ti_GetSize(slot);
 	if(file->size > MAX_FILE_SIZE || file->size < FILE_DETECT_STRING_LEN)
 	{
-		programState = QUIT; // should be caught before a crash ¯_(ツ)_/¯
+		programState = QUIT;
 		return;
 	}
 	
+	// copy file into the end of the editor text buffer
+	
 	file->dataSize = file->size - FILE_DETECT_STRING_LEN;
+	
 	ti_Seek(FILE_DATA_OFFSET, SEEK_SET, slot);
-	ti_Read(editor.buffer2, file->dataSize, 1, slot);
+	ti_Read(editor.bufferEnd - file->dataSize + 1, file->dataSize, 1, slot);
 	ti_Close(slot);
+	
 	editor.cursorPos = 0;
 }
 

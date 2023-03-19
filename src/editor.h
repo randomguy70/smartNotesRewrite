@@ -25,19 +25,20 @@ extern "C" {
 
 struct editor
 {
-	char buffer1[MAX_DATA_SIZE];
-	char buffer2[MAX_DATA_SIZE];
+	char buffer[MAX_DATA_SIZE];
+	char *bufferEnd;
+	unsigned int dataSize;
 	
 	unsigned int cursorPos;
-	
+
 	struct file *file;
 	struct menuBar *menuBar;
 };
 
 extern struct editor editor;
 
+// run once at startup
 void initEditor();
-struct menuBar *loadEditorMenuBar();
 
 enum programState runEditor();
 
@@ -46,6 +47,16 @@ void drawEditor();
 
 void drawEditorBackground();
 void drawEditorText();
+
+// returns a pointer to the editor menu bar struct
+struct menuBar *loadEditorMenuBar();
+
+/** Calculates the character length and pixel width of a word
+ * @param readPos start of word
+ * @param lenBuffer pointer to variable to hold the character length
+ * @param widthBuffer pointer to variable to hold the pixel width
+ * */
+void editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
 
 #ifdef __cplusplus
 }

@@ -10,9 +10,11 @@
 #include <stdint.h>
 #include <graphx.h>
 #include <fileioc.h>
+#include <fontlibc.h>
 
 bool init();
 void cleanup();
+void printSystemText(char *str);
 
 struct finder finder;
 struct editor editor;
@@ -24,9 +26,10 @@ int main(void)
 	if(init() == false) {return 0;}
 	
 	initFinder();
+	initEditor();
 	
 	// generate files for testing
-	char *names[] = {"One", "Two", "Three","Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen"};
+	char *names[] = {"One", "Two"};
 	char text[] = "qwe rtyuiopa sdfghjkl zxcvbnhgjgfjghj,gfjkgjf 5678uyhjkgftyuihgj";
 	
 	for(int i = 0; i < 15; i++)
@@ -58,13 +61,38 @@ int main(void)
 
 bool init()
 {
+	// gfx setup
 	gfx_Begin();
 	gfx_SetPalette(palette, sizeof(palette), myimages_palette_offset);
 	gfx_SetTransparentColor(transparent);
 	gfx_SetTextTransparentColor(transparent);
 	gfx_SetTextBGColor(transparent);
 	
+	// fontlib setup
+	fontlib_font_t *font_pack;
+	char *font_pack_name = "DRSANS";
+	fontlib_SetTransparency(true);
+	font_pack = fontlib_GetFontByIndex(font_pack_name, 1);
+	if (font_pack)
+	{
+		fontlib_SetFont(font_pack, 0);
+	}
+	else
+	{
+		printSystemText("Font file DRSANS not found.");
+		return false;
+	}
+	
 	return true;
+}
+
+void printSystemText(char *str)
+{
+	gfx_SetDraw(gfx_buffer);
+	gfx_SetTextBGColor(transparent);
+	gfx_SetTextFGColor(black);
+	gfx_FillScreen(white);
+	gfx_PrintStringXY(str, 4, 4);
 }
 
 void cleanup()
