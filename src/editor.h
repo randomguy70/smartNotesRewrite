@@ -38,7 +38,7 @@ extern "C" {
 extern struct editor editor;
 struct editor
 {
-	char buffer[MAX_DATA_SIZE]; // +1 because of the EOF byte
+	char buffer[MAX_DATA_SIZE + 1]; // +1 because of the EOF byte
 	unsigned int dataSize;
 	char* bufferEnd;
 	char* cursorLeft, *cursorRight;
