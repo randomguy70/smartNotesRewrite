@@ -1,15 +1,16 @@
 #include "editor.h"
 
+#include "file.h"
 #include "main.h"
 #include "menu.h"
 #include "colors.h"
 #include "finder.h"
-#include "file.h"
 
 #include "graphx.h"
 #include "fileioc.h"
 #include "keypadc.h"
 #include "fontlibc.h"
+#include "stdbool.h"
 
 // DEBUG
 #include "string.h"
@@ -19,15 +20,13 @@ void initEditor()
 	editor.menuBar = loadEditorMenuBar();
 	
 	// wipe text buffer (XXX)
-	for (int i = 0; i < MAX_DATA_SIZE; i++)
+	for (int i = 0; i < MAX_DATA_SIZE + 1; i++)
 	{
 		editor.buffer[i] = 0;
 	}
 	
-	// keep track of memory
-	
+	// initialize some buffer metadata
 	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
-	editor.cursorPos = 0;
 	editor.dataSize = 0;
 	editor.file = NULL;
 }
@@ -36,12 +35,6 @@ enum programState runEditor()
 {
 	editor.file = &finder.files[finder.fileOffset];
 	loadFileData(editor.file);
-	
-	// DEBUG
-	char str[100] = {'\0'};
-	strcpy(str, "This is a sentence");
-	strcpy(editor.buffer, str);
-	editor.dataSize = strlen(str);
 	
 	if(programState == QUIT)
 	{
@@ -54,9 +47,7 @@ enum programState runEditor()
 	gfx_FillScreen(white);
 	gfx_SetTextFGColor(black);
 	
-	gfx_HorizLine(0, 10, fontlib_GetStringWidth("Four"));
-	fontlib_SetCursorPosition(0, 11);
-	fontlib_DrawString("Four");
+	
 	
 	gfx_Blit(gfx_buffer);
 	
@@ -159,60 +150,90 @@ struct menuBar *loadEditorMenuBar()
 	return &menuBar;
 }
 
-void editor_GetLineLen(char *readPos, int *lenBuffer)
+/*
+char* editor_GetLineLen(char *readPos, int *lenBuffer)
 {
+	char* prevReadPos = readPos;
 	
+	// character length of a word
+	int wordLen = 0;
+	int lineLen = 0;
+	// pixel width of a word
+	int wordWidth = 0;
+	int lineWidth = 0;
+	
+	while(readPos <= editor.bufferEnd)
+	{
+		readPos = editor_LoadWord(readPos, &wordLen, &wordWidth);
+		if(lineWidth + wordWidth <= MAX_LINE_PIXEL_WIDTH)
+		{
+			lineLen += wordLen;
+			lineWidth += wordWidth;
+			
+			
+			// tack on a space after the word
+			if(*readPos == ' ' && ((fontlib_GetGlyphWidth(*readPos) + lineWidth) <= MAX_LINE_PIXEL_WIDTH))
+			{
+				readPos++;
+				lineWidth+= fontlib_GetGlyphWidth(*readPos);
+				lineLen++;
+			}
+			// new line
+			else if(*readPos == '\n')
+			{
+				readPos++;
+				lineLen++;
+				break;
+			}
+			// you shouldn't ever encounter a blank character...but if you do...
+			else if(*readPos == '\0')
+			{
+				break;
+			}
+		}
+	}
+	
+	return readPos;
 }
+*/
 
-void editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
+bool editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 {
+	char *startPos = readPos;
 	int len = 0;
-	int width = 0;
-	bool beforeCursor;
-	char character;
-	
-	// make sure readPos is within the text buffer
-	
-	if (readPos < editor.buffer || readPos > editor.bufferEnd)
-	{
-		return;
-	}
-	
-	// check if we have read past the cursor yet
-	
-	if (readPos < editor.buffer + editor.cursorPos)
-	{
-		beforeCursor = true;
-	}
-	else
-	{
-		beforeCursor = false;
-	}
-	
-	while (readPos <= editor.bufferEnd)
-	{
-		character = *readPos;
 		
-		if (character != ' ' && character != '\n' && character != '\0')
+	// if we're before the cursor
+	if(readPos >= editor.buffer && readPos < editor.cursorLeft)
+	{
+		// XXX I need to figure out how many of the smallest characters can fit on one line to optimize this...
+		while(*readPos != '\n' && *readPos != ' ' && len < 200)
+		{
+			*widthBuffer += fontlib_GetGlyphWidth(*readPos);
+			readPos++;
+			len++;
+			
+			if(readPos >= editor.cursorLeft)
+			{
+				readPos = editor.cursorRight;
+			}
+		}
+	}
+	// if we're after the cursor
+	else if(readPos >= editor.cursorRight && readPos < editor.bufferEnd)
+	{
+		while(*readPos != '\0' && *readPos != '\n' && *readPos != ' ' && len < 200)
 		{
 			readPos++;
 			len++;
-			width += gfx_GetCharWidth(character);
 		}
-		else
-		{
-			break;
-		}
-		
-		if (beforeCursor && readPos >= editor.buffer + editor.cursorPos)
-		{
-			beforeCursor = false;
-			readPos = (editor.bufferEnd - editor.dataSize + editor.cursorPos) + 1;
-		}
+		*widthBuffer = fontlib_GetStringWidthL(startPos, len);
+	}
+	// if we got a bad read pointer
+	else
+	{
+		return false;
 	}
 	
 	*lenBuffer = len;
-	*widthBuffer = width;
-	
-	return;
+	return true;
 }

@@ -15,6 +15,12 @@
 		"utility": "c",
 		"gfx.h": "c",
 		"finder.h": "c",
-		"palette.h": "c"
-	}
+		"palette.h": "c",
+		"timers.h": "c",
+		"fontlibc.h": "c",
+		"menu.h": "c",
+		"util.h": "c",
+		"file.h": "c"
+	},
+	"chatgpt.apiKey": "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"
 }

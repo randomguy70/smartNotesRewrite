@@ -1,15 +1,14 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include "file.h"
+
 #include "menu.h"
 #include "main.h"
-#include "file.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define MAX_DATA_SIZE               8000 /* 8kb is probably more than enough. However, you can increase it if you want to risk a crash :P */
 
 #define EDITOR_HEADER_BAR_WIDTH     GFX_LCD_WIDTH
 #define EDITOR_HEADER_BAR_HEIGHT    16
@@ -23,19 +22,31 @@ extern "C" {
 #define EDITOR_BODY_X               0
 #define EDITOR_BODY_Y               EDITOR_HEADER_BAR_HEIGHT
 
+#define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 2)
+
+/* Editor Buffer layout
+
+              File
+--------------------------------------
+||||||||||||||                 |||||||
+--------------------------------------
+              ^                ^
+	       cursor left   cursor right
+            (insert)
+*/
+
+extern struct editor editor;
 struct editor
 {
-	char buffer[MAX_DATA_SIZE];
-	char *bufferEnd;
+	char buffer[MAX_DATA_SIZE]; // +1 because of the EOF byte
 	unsigned int dataSize;
+	char* bufferEnd;
+	char* cursorLeft, *cursorRight;
+	char* startOfPage; // position of the first character on the screen
 	
-	unsigned int cursorPos;
-
 	struct file *file;
 	struct menuBar *menuBar;
 };
-
-extern struct editor editor;
 
 // run once at startup
 void initEditor();
@@ -53,10 +64,18 @@ struct menuBar *loadEditorMenuBar();
 
 /** Calculates the character length and pixel width of a word
  * @param readPos start of word
- * @param lenBuffer pointer to variable to hold the character length
- * @param widthBuffer pointer to variable to hold the pixel width
+ * @param lenBuffer pointer to variable to store the character length
+ * @param widthBuffer pointer to variable to store the pixel width
+ * @return Returns a pointer to the first byte after the word
  * */
-void editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
+bool editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
+
+/** Calculates the character length of a line
+ * @param readPos start of line
+ * @param lenBuffer pointer to variable to hold the line width
+ * @return returns a pointer to the next line, or NULL if there are no more lines
+*/
+char* editor_GetLineLen(char *readPos, int *lenBuffer);
 
 #ifdef __cplusplus
 }

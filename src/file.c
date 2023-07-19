@@ -22,14 +22,16 @@ uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
 		
 		strcpy(files[numFiles].name, namePtr);
 		
+		// XXX in the future I will display the 16 digit aesthetic filename
+		
 		// if(isHidden(files[numFiles].view_name))
 		// {
-			// files[numFiles].view_name[0] ^= 64;
-			// files[numFiles].isHidden = true;
+		// 	files[numFiles].view_name[0] ^= 64;
+		// 	files[numFiles].isHidden = true;
 		// }
 		// else
 		// {
-			// files[numFiles].isHidden = false;
+		// 	files[numFiles].isHidden = false;
 		// }
 		
 		numFiles++;
@@ -53,21 +55,22 @@ void loadFileData(struct file *file)
 	// get file size and make sure it doesn't exceed the maximum
 	
 	file->size = ti_GetSize(slot);
+	file->dataSize = file->size - FILE_METADATA_SIZE;
 	if(file->size > MAX_FILE_SIZE || file->size < FILE_DETECT_STRING_LEN)
 	{
 		programState = QUIT;
 		return;
 	}
 	
+	editor.cursorLeft = 0;
+	editor.cursorRight = editor.buffer + MAX_DATA_SIZE - file->dataSize;
+	editor.startOfPage = editor.cursorRight;
+	
 	// copy file into the end of the editor text buffer
 	
-	file->dataSize = file->size - FILE_DETECT_STRING_LEN;
-	
-	ti_Seek(FILE_DATA_OFFSET, SEEK_SET, slot);
-	ti_Read(editor.bufferEnd - file->dataSize + 1, file->dataSize, 1, slot);
+	ti_Seek(FILE_DATA_POS, SEEK_SET, slot);
+	ti_Read(editor.cursorRight, file->dataSize, 1, slot);
 	ti_Close(slot);
-	
-	editor.cursorPos = 0;
 }
 
 uint8_t getNumFiles(void)

@@ -11,6 +11,7 @@
 #include <graphx.h>
 #include <fileioc.h>
 #include <fontlibc.h>
+#include <string.h>
 
 bool init();
 void cleanup();
@@ -29,14 +30,19 @@ int main(void)
 	initEditor();
 	
 	// generate files for testing
-	char *names[] = {"One", "Two"};
-	char text[] = "qwe rtyuiopa sdfghjkl zxcvbnhgjgfjghj,gfjkgjf 5678uyhjkgftyuihgj";
-	
-	for(int i = 0; i < 15; i++)
+	char *aestheticNames[] = {"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen"};
+	char *names[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"};
+	char text[] = "The quick brown   fox      jumps over the lazy dog................................";
+	char endOfFile = '\0';
+	for(int i = 0; i < 14; i++)
 	{
 		uint8_t file = ti_Open(names[i], "w+");
+		ti_Seek(0, SEEK_SET, file);
 		ti_Write(FILE_DETECT_STRING, sizeof(FILE_DETECT_STRING) - 1, 1, file);
-		ti_Write(text, 65, 1, file);
+		ti_Write(aestheticNames[i], strlen(aestheticNames[i]), 1, file);
+		ti_Seek(21, SEEK_SET, file);
+		ti_Write(&endOfFile, 1, 1, file);
+		ti_Write(text, 82, 1, file);
 		ti_SetArchiveStatus(true, file);
 		ti_Close(file);
 	}
@@ -50,6 +56,7 @@ int main(void)
 				break;
 			case EDITOR:
 				programState = runEditor();
+				break;
 			default:
 				break;
 		}
