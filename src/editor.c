@@ -45,9 +45,18 @@ enum programState runEditor()
 	// drawEditor();
 	gfx_SetDraw(gfx_buffer);
 	gfx_FillScreen(white);
-	gfx_SetTextFGColor(black);
+	fontlib_SetWindowFullScreen();
+	fontlib_SetForegroundColor(black);
+	fontlib_SetBackgroundColor(white);
+	fontlib_SetCursorPosition(5, 5);
 	
-	
+	for(int i=0; i<3000; i++)
+	{
+		if(editor.buffer[i] != 0)
+		{
+			fontlib_DrawGlyph(*(editor.cursorRight + i));
+		}
+	}
 	
 	gfx_Blit(gfx_buffer);
 	

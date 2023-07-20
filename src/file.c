@@ -2,6 +2,7 @@
 
 #include "finder.h"
 #include "main.h"
+#include "editor.h"
 
 #include <stdint.h>
 #include <fileioc.h>
@@ -56,7 +57,7 @@ void loadFileData(struct file *file)
 	
 	file->size = ti_GetSize(slot);
 	file->dataSize = file->size - FILE_METADATA_SIZE;
-	if(file->size > MAX_FILE_SIZE || file->size < FILE_DETECT_STRING_LEN)
+	if(file->dataSize > MAX_FILE_SIZE || file->size < FILE_METADATA_SIZE)
 	{
 		programState = QUIT;
 		return;

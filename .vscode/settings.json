@@ -22,5 +22,6 @@
 		"util.h": "c",
 		"file.h": "c"
 	},
-	"chatgpt.apiKey": "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"
+	"chatgpt.apiKey": "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",
+	"C_Cpp.errorSquiggles": "disabled"
 }

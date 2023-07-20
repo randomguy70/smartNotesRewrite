@@ -1,8 +1,6 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include "editor.h"
-
 #include "stdbool.h"
 #include "stdint.h"
 
@@ -11,29 +9,32 @@ extern "C" {
 #endif
 
 #define FILE_DETECT_STRING        "NOTES"
+#define FILE_DETECT_STRING_POS    0
 #define FILE_DETECT_STRING_LEN    5
 
 #define AESTHETIC_FILE_NAME_POS   5
 #define AESTHETIC_FILE_NAME_LEN   16
 
-#define FILE_DATA_POS             21
+#define FILE_DATA_POS             22 // (5 + 16) + 1 for the null byte
 
-#define FILE_METADATA_SIZE        FILE_DETECT_STRING_LEN + AESTHETIC_FILE_NAME_LEN + 1
+#define FILE_EOF_LEN              1
 
-#define MAX_DATA_SIZE             3000
+#define FILE_METADATA_SIZE        FILE_DETECT_STRING_LEN + AESTHETIC_FILE_NAME_LEN + 1 + FILE_EOF_LEN
+
+#define MAX_DATA_SIZE             (3000)
 
 #define MAX_FILE_SIZE             FILE_DETECT_STRING_LEN + AESTHETIC_FILE_NAME_LEN + MAX_DATA_SIZE + 1
 #define MAX_FILES_LOADABLE        30
 
 /*
------------------ FILE LAYOUT --------------
-| Offset | Size | Purpose                  |
---------------------------------------------
-| 0      | 5    | file detect string       |
-| 5      | 16   | aesthetic file name      |
-| 21     | n    | file data n bytes long   |
-| n + 21 | 1    | NULL byte signifying EOF |
---------------------------------------------
+----------------- FILE LAYOUT ----------------
+| Offset | Length | Purpose                  |
+----------------------------------------------
+| 0      | 5      | file detect string       |
+| 5      | 17     | aesthetic file name      |
+| 22     | n      | file data n bytes long   |
+| n + 22 | 1      | NULL byte signifying EOF |
+----------------------------------------------
 */
 
 struct file
