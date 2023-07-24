@@ -2,6 +2,7 @@ bin/
 obj/
 /*.DS_Store
 .vscode/
+*.vscode
 .VSCodeCounter/
 gfx/*.c
 gfx/*.h
