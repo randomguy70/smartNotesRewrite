@@ -1,8 +1,9 @@
 bin/
 obj/
 /*.DS_Store
-.vscode
-.VSCodeCounter
+.vscode/
+.VSCodeCounter/
 gfx/*.c
 gfx/*.h
 gfx/*.out
+*.DS_Store
