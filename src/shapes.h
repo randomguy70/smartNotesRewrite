@@ -18,9 +18,8 @@ void outlinedRoundedRectangle(int x, int y, int width, int height, int borderRad
 // rounded window with outline and header
 void window(int x, int y, int width, int height, int borderRadius, enum color headerColor, enum color bodyColor, enum color outlineColor);
 
-// filled rectangle with each corner pixel missing (for small rounded rectangle simulation)
+// filled rectangle with each corner pixel missing (approximation of rounded rectangle)
 void chippedRectangle(int x, int y, int width, int height);
-
 
 #ifdef __cplusplus
 }
