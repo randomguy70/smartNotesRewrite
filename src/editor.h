@@ -2,7 +2,6 @@
 #define EDITOR_H
 
 #include "file.h"
-
 #include "menu.h"
 #include "main.h"
 
@@ -18,7 +17,7 @@ extern "C" {
 #define EDITOR_MENU_BAR_HEIGHT      16
 
 #define EDITOR_BODY_WIDTH           GFX_LCD_WIDTH
-#define EDITOR_BODY_HEIGHT          GFX_LCD_HEIGHT - (EDITOR_HEADER_BAR_HEIGHT + EDITOR_MENU_BAR_HEIGHT)
+#define EDITOR_BODY_HEIGHT          (GFX_LCD_HEIGHT - (EDITOR_HEADER_BAR_HEIGHT + EDITOR_MENU_BAR_HEIGHT))
 #define EDITOR_BODY_X               0
 #define EDITOR_BODY_Y               EDITOR_HEADER_BAR_HEIGHT
 
@@ -35,7 +34,6 @@ extern "C" {
             (insert)
 */
 
-extern struct editor editor;
 struct editor
 {
 	char buffer[MAX_DATA_SIZE + 1]; // +1 because of the EOF byte
@@ -47,6 +45,8 @@ struct editor
 	struct file *file;
 	struct menuBar *menuBar;
 };
+extern struct editor editor;
+
 
 // run once at startup
 void initEditor();

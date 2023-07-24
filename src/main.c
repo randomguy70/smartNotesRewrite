@@ -98,20 +98,22 @@ void generateTestingFiles(void)
 {
 	char *aestheticNames[] = {"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen"};
 	char *names[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"};
-	char text[] = "The quick brown   fox      jumps over the lazy dog................................";
-	char nullByte = '\0';
+	char text[] = "The quick brown fox jumps over the lazy dog...";
+	char nullBytes[16] = {'\0'};
 	for(int i = 0; i < 14; i++)
 	{
 		uint8_t file = ti_Open(names[i], "w+");
 		ti_Seek(FILE_DETECT_STRING_POS, SEEK_SET, file);
 		ti_Write(FILE_DETECT_STRING, sizeof(FILE_DETECT_STRING) - 1, 1, file);
+		
 		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, file);
-		ti_Write(&nullByte, 1, 17, file);
+		ti_Write(nullBytes, 1, 16, file);
 		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, file);
 		ti_Write(aestheticNames[i], strlen(aestheticNames[i]), 1, file);
+		
 		ti_Seek(FILE_DATA_POS, SEEK_SET, file);
 		ti_Write(text, sizeof(text)-1, 1, file);
-		ti_Write(&nullByte, 1, 1, file);
+		ti_Write(nullBytes, 1, 1, file);
 		ti_SetArchiveStatus(true, file);
 		ti_Close(file);
 	}

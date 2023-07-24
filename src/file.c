@@ -57,18 +57,18 @@ void loadFileData(struct file *file)
 	
 	file->size = ti_GetSize(slot);
 	file->dataSize = file->size - FILE_METADATA_SIZE;
+	
 	if(file->dataSize > MAX_FILE_SIZE || file->size < FILE_METADATA_SIZE)
 	{
 		programState = QUIT;
 		return;
 	}
 	
-	editor.cursorLeft = 0;
+	editor.cursorLeft = editor.buffer;
 	editor.cursorRight = editor.buffer + MAX_DATA_SIZE - file->dataSize;
 	editor.startOfPage = editor.cursorRight;
 	
-	// copy file into the end of the editor text buffer
-	
+	// copy file's data into the end of the editor text buffer
 	ti_Seek(FILE_DATA_POS, SEEK_SET, slot);
 	ti_Read(editor.cursorRight, file->dataSize, 1, slot);
 	ti_Close(slot);

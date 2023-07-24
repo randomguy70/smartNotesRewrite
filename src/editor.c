@@ -6,14 +6,11 @@
 #include "colors.h"
 #include "finder.h"
 
-#include "graphx.h"
-#include "fileioc.h"
-#include "keypadc.h"
-#include "fontlibc.h"
-#include "stdbool.h"
-
-// DEBUG
-#include "string.h"
+#include <graphx.h>
+#include <fileioc.h>
+#include <keypadc.h>
+#include <fontlibc.h>
+#include <stdbool.h>
 
 void initEditor()
 {
@@ -41,7 +38,7 @@ enum programState runEditor()
 		return QUIT;
 	}
 	
-	// DEBUG
+	// XXX DEBUG
 	// drawEditor();
 	gfx_SetDraw(gfx_buffer);
 	gfx_FillScreen(white);
@@ -50,13 +47,7 @@ enum programState runEditor()
 	fontlib_SetBackgroundColor(white);
 	fontlib_SetCursorPosition(5, 5);
 	
-	for(int i=0; i<3000; i++)
-	{
-		if(editor.buffer[i] != 0)
-		{
-			fontlib_DrawGlyph(*(editor.cursorRight + i));
-		}
-	}
+	fontlib_DrawGlyph(*editor.cursorRight);
 	
 	gfx_Blit(gfx_buffer);
 	
