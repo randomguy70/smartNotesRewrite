@@ -50,7 +50,7 @@ enum programState runEditor()
 		fontlib_DrawGlyph(*(editor.cursorRight + i));
 	}
 	dbg_printf("Line Length: %d\n", lineLen);
-	
+	dbg_printf("Cursor Right: %p\n", editor.cursorRight);
 	
 	while(!(programState == QUIT))
 	{
@@ -156,12 +156,11 @@ char* editor_GetLineLen(char *readPos, int *lenBuffer)
 	int lineLen = 0, lineWidth = 0;
 	int wordLen = 0, wordWidth = 0;
 	
-	// while you don't hit a newline code or the EOF (null byte) and you can fit another word on the line...keep adding words
+	// while you don't hit a newline code or the end of the file and you can fit another word on the line...keep adding
 	while(1)
 	{
 		readPos = editor_LoadWord(readPos, &wordLen, &wordWidth);
 		
-		// XXX have to add an edge case where a single word is longer than a line
 		// if the word fits on the line
 		if(lineWidth + wordWidth <= MAX_LINE_PIXEL_WIDTH)
 		{
@@ -185,11 +184,11 @@ char* editor_GetLineLen(char *readPos, int *lenBuffer)
 				}
 			}
 			
-			// if we hit a new line code ('\n'), it counts as the end of the current line
+			// if we hit a new line code ('\n')
 			else if(*readPos == '\n')
 			{
 				readPos++;
-				lineLen++;
+				
 				break;
 			}
 			
@@ -268,5 +267,6 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 	{
 		readPos = editor.cursorRight;
 	}
+	dbg_printf("read pos after word is %p\n", readPos);
 	return readPos;
 }
