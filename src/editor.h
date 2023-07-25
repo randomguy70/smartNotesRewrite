@@ -21,17 +21,17 @@ extern "C" {
 #define EDITOR_BODY_X               0
 #define EDITOR_BODY_Y               EDITOR_HEADER_BAR_HEIGHT
 
-#define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 2)
+#define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 4) // -4 because the cursor is 2 pixels wide, so you need 2 pixels padding on either side of the screen
 
-/* Editor Buffer layout
+/* Editor Split Buffer layout
 
-              File
---------------------------------------
-||||||||||||||                 |||||||
---------------------------------------
-              ^                ^
-	       cursor left   cursor right
-            (insert)
+                     File
+--------------------------------------------
+||||||||||||||                       |||||||
+--------------------------------------------
+              ^                      ^
+	       cursor left           cursor right
+			(insert)      (data right after the cursor)
 */
 
 struct editor
@@ -62,13 +62,14 @@ void drawEditorText();
 // returns a pointer to the editor menu bar struct
 struct menuBar *loadEditorMenuBar();
 
-/** Calculates the character length and pixel width of a word
+/** Calculates the character length and pixel width of a word. It does take into consideration the split buffer method I am using,
+ * so I don't have to worry about that with editor_GetLineLen.
  * @param readPos start of word
  * @param lenBuffer pointer to variable to store the character length
  * @param widthBuffer pointer to variable to store the pixel width
  * @return Returns a pointer to the first byte after the word
  * */
-bool editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
+char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
 
 /** Calculates the character length of a line
  * @param readPos start of line

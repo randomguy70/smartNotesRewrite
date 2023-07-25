@@ -11,6 +11,7 @@
 #include <keypadc.h>
 #include <fontlibc.h>
 #include <stdbool.h>
+#include <debug.h>
 
 void initEditor()
 {
@@ -39,17 +40,17 @@ enum programState runEditor()
 	}
 	
 	// XXX DEBUG
-	// drawEditor();
-	gfx_SetDraw(gfx_buffer);
-	gfx_FillScreen(white);
-	fontlib_SetWindowFullScreen();
-	fontlib_SetForegroundColor(black);
-	fontlib_SetBackgroundColor(white);
-	fontlib_SetCursorPosition(5, 5);
+	drawEditor();
+	int lineLen;
+	editor_GetLineLen(editor.cursorRight, &lineLen);
+	gfx_SetDraw(gfx_screen);
+	fontlib_SetCursorPosition(2, 25);
+	for(int i = 0; i < lineLen; i++)
+	{
+		fontlib_DrawGlyph(*(editor.cursorRight + i));
+	}
+	dbg_printf("Line Length: %d\n", lineLen);
 	
-	fontlib_DrawGlyph(*editor.cursorRight);
-	
-	gfx_Blit(gfx_buffer);
 	
 	while(!(programState == QUIT))
 	{
@@ -105,10 +106,6 @@ struct menuBar *loadEditorMenuBar()
 				.numOptions = 0,
 			},
 			{
-				.name = "Settings",
-				.numOptions = 0,
-			},
-			{
 				.name = "Actions",
 				.numOptions = 3,
 				.options = 
@@ -117,6 +114,10 @@ struct menuBar *loadEditorMenuBar()
 					"Erase",
 					"Refresh"
 				}
+			},
+			{
+				.name = "Settings",
+				.numOptions = 0,
 			},
 			{
 				.name = "Edit",
@@ -150,59 +151,84 @@ struct menuBar *loadEditorMenuBar()
 	return &menuBar;
 }
 
-/*
 char* editor_GetLineLen(char *readPos, int *lenBuffer)
 {
-	char* prevReadPos = readPos;
+	int lineLen = 0, lineWidth = 0;
+	int wordLen = 0, wordWidth = 0;
 	
-	// character length of a word
-	int wordLen = 0;
-	int lineLen = 0;
-	// pixel width of a word
-	int wordWidth = 0;
-	int lineWidth = 0;
-	
-	while(readPos <= editor.bufferEnd)
+	// while you don't hit a newline code or the EOF (null byte) and you can fit another word on the line...keep adding words
+	while(1)
 	{
 		readPos = editor_LoadWord(readPos, &wordLen, &wordWidth);
+		
+		// XXX have to add an edge case where a single word is longer than a line
+		// if the word fits on the line
 		if(lineWidth + wordWidth <= MAX_LINE_PIXEL_WIDTH)
 		{
 			lineLen += wordLen;
 			lineWidth += wordWidth;
 			
-			
-			// tack on a space after the word
-			if(*readPos == ' ' && ((fontlib_GetGlyphWidth(*readPos) + lineWidth) <= MAX_LINE_PIXEL_WIDTH))
+			// if the word ended with a space
+			if(*readPos == ' ')
 			{
-				readPos++;
-				lineWidth+= fontlib_GetGlyphWidth(*readPos);
-				lineLen++;
+				// if the space can fit on the line
+				if((fontlib_GetGlyphWidth(' ') + lineWidth) <= MAX_LINE_PIXEL_WIDTH)
+				{
+					readPos++;
+					lineWidth += fontlib_GetGlyphWidth(' ');
+					lineLen++;
+				}
+				// if the space can't fit on the line
+				else
+				{
+					break;
+				}
 			}
-			// new line
+			
+			// if we hit a new line code ('\n'), it counts as the end of the current line
 			else if(*readPos == '\n')
 			{
 				readPos++;
 				lineLen++;
 				break;
 			}
-			// you shouldn't ever encounter a blank character...but if you do...
+			
+			// if we hit the end of the buffer
 			else if(*readPos == '\0')
 			{
-				break;
+				*lenBuffer = lineLen;
+				return NULL;
 			}
+		}
+		
+		// if it's the first word on the line and it's longer than a full line, it needs to be trimmed
+		else if(lineLen == 0)
+		{
+			do
+			{
+				lineWidth += fontlib_GetGlyphWidth(*readPos++);
+				lineLen++;
+			} while (lineWidth < MAX_LINE_PIXEL_WIDTH);
+		}
+		
+		// if there are too many words on the line to fit another, end the line
+		else
+		{
+			break;
 		}
 	}
 	
+	*lenBuffer = lineLen;
+	
 	return readPos;
 }
-*/
 
-bool editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
+char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 {
 	char *startPos = readPos;
 	int len = 0;
-		
-	// if we're before the cursor
+	
+	// if we're before the cursor (a blinking line showing where we're inserting text)
 	if(readPos >= editor.buffer && readPos < editor.cursorLeft)
 	{
 		// XXX I need to figure out how many of the smallest characters can fit on one line to optimize this...
@@ -221,19 +247,26 @@ bool editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 	// if we're after the cursor
 	else if(readPos >= editor.cursorRight && readPos < editor.bufferEnd)
 	{
-		while(*readPos != '\0' && *readPos != '\n' && *readPos != ' ' && len < 200)
+		while(*readPos != '\0' && *readPos != '\n' && *readPos != ' ' && len < 100)
 		{
 			readPos++;
 			len++;
 		}
 		*widthBuffer = fontlib_GetStringWidthL(startPos, len);
 	}
-	// if we got a bad read pointer
+	// if we got a bad read pointer for a parameter
 	else
 	{
-		return false;
+		return NULL;
 	}
 	
 	*lenBuffer = len;
-	return true;
+	
+	// make sure the reading pointer we return isn't in between the two two buffer sections
+	// that way, when we're loading a line, we don't have to worry about where we are in the buffer
+	if(readPos >= editor.cursorLeft && readPos < editor.cursorRight)
+	{
+		readPos = editor.cursorRight;
+	}
+	return readPos;
 }
