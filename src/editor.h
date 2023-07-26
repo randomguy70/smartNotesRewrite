@@ -36,14 +36,17 @@ extern "C" {
 
 struct editor
 {
+	struct file *file;
+	struct menuBar *menuBar;
+	
 	char buffer[MAX_DATA_SIZE + 1]; // +1 because of the EOF byte
-	unsigned int dataSize;
 	char* bufferEnd;
+	unsigned int dataSize;
 	char* cursorLeft, *cursorRight;
 	char* startOfPage; // position of the first character on the screen
 	
-	struct file *file;
-	struct menuBar *menuBar;
+	char *linePointers[10];
+	int lineLengths[10];
 };
 extern struct editor editor;
 

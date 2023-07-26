@@ -98,10 +98,8 @@ void generateTestingFiles(void)
 {
 	char *aestheticNames[] = {"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen"};
 	char *names[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"};
-	char text[] = "The quick brown fox jumps jumps jumps jumps jumps jumps jumps over the lazy dog...";
+	char text[] = "The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog The quick brown fox jumps over the lazy dog";
 	char nullBytes[16] = {'\0'};
-	
-	text[1] = '\n';
 	
 	for(int i = 0; i < 14; i++)
 	{

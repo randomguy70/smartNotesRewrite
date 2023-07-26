@@ -42,7 +42,9 @@ enum programState runEditor()
 	// XXX DEBUG
 	drawEditor();
 	int lineLen;
-	editor_GetLineLen(editor.cursorRight, &lineLen);
+	char *nextLinePtr;
+	nextLinePtr = editor_GetLineLen(editor.cursorRight, &lineLen);
+	dbg_printf("next line: %p", nextLinePtr);
 	gfx_SetDraw(gfx_screen);
 	fontlib_SetCursorPosition(2, 25);
 	for(int i = 0; i < lineLen; i++)
@@ -153,12 +155,14 @@ struct menuBar *loadEditorMenuBar()
 
 char* editor_GetLineLen(char *readPos, int *lenBuffer)
 {
+	char *prevReadPos;
 	int lineLen = 0, lineWidth = 0;
 	int wordLen = 0, wordWidth = 0;
 	
 	// while you don't hit a newline code or the end of the file and you can fit another word on the line...keep adding
 	while(1)
 	{
+		prevReadPos = readPos;
 		readPos = editor_LoadWord(readPos, &wordLen, &wordWidth);
 		
 		// if the word fits on the line
@@ -213,6 +217,8 @@ char* editor_GetLineLen(char *readPos, int *lenBuffer)
 		// if there are too many words on the line to fit another, end the line
 		else
 		{
+			// go back to the last word
+			readPos = prevReadPos;
 			break;
 		}
 	}
