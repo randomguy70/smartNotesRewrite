@@ -157,16 +157,19 @@ struct menuBar *loadEditorMenuBar()
 
 char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 {
-	char *startPos = readPos;
+	// extremely important to wipe the buffers!!!
+	*widthBuffer = 0, *lenBuffer = 0;
+	
+	char *prevReadPos;
 	int len = 0;
 	
-	// if we're before the cursor (a blinking line showing where we're inserting text)
+	// if we're starting before the cursor (a blinking line showing where we're inserting text)
 	if(readPos >= editor.buffer && readPos < editor.cursorLeft)
 	{
-		// XXX I need to figure out how many of the smallest characters can fit on one line to optimize this...
 		while(*readPos != '\n' && *readPos != ' ' && len < 200)
 		{
 			*widthBuffer += fontlib_GetGlyphWidth(*readPos);
+			prevReadPos = readPos;
 			readPos++;
 			len++;
 			
@@ -174,18 +177,39 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 			{
 				readPos = editor.cursorRight;
 			}
+			
+			// once a word becomes longer than a line, go back a character (assume it's longer than 1 character)
+			if(*widthBuffer > MAX_LINE_PIXEL_WIDTH)
+			{
+				*widthBuffer -= fontlib_GetGlyphWidth(*prevReadPos);
+				readPos = prevReadPos;
+				len--;
+				break;
+			}
 		}
 	}
-	// if we're after the cursor
+	
+	// if we're starting after the cursor
 	else if(readPos >= editor.cursorRight && readPos < editor.bufferEnd)
 	{
 		while(*readPos != '\0' && *readPos != '\n' && *readPos != ' ' && len < 100)
 		{
+			*widthBuffer += fontlib_GetGlyphWidth(*readPos);
+			prevReadPos = readPos;
 			readPos++;
 			len++;
+			
+			// once a word becomes longer than a line, go back a character
+			if(*widthBuffer > MAX_LINE_PIXEL_WIDTH)
+			{
+				*widthBuffer -= fontlib_GetGlyphWidth(*prevReadPos);
+				readPos = prevReadPos;
+				*lenBuffer = --len;
+				return readPos;
+			}
 		}
-		*widthBuffer = fontlib_GetStringWidthL(startPos, len);
 	}
+	
 	// if we got a bad read pointer for a parameter
 	else
 	{
@@ -210,7 +234,6 @@ char* editor_LoadLine(char *readPos, int *lenBuffer)
 	int lineLen = 0, lineWidth = 0;
 	int wordLen = 0, wordWidth = 0;
 	
-	// while you don't hit a newline code or the end of the file and you can fit another word on the line...keep adding
 	while(1)
 	{
 		prevReadPos = readPos;
@@ -248,28 +271,29 @@ char* editor_LoadLine(char *readPos, int *lenBuffer)
 			}
 			
 			// if we hit the end of the buffer
-			else if(*readPos == '\0')
+			else if(readPos == NULL)
 			{
-				dbg_printf("hit EOF when loading line\n");
 				*lenBuffer = lineLen;
 				return NULL;
 			}
 			
+			// if the word was too long for a line and simply had to be trimmed
 			else
 			{
-				dbg_printf("something else happened");
-				return NULL;
+				lineLen = wordLen;
+				break;
 			}
 		}
 		
 		// if it's the first word on the line and it's longer than a full line, it needs to be trimmed
 		else if(lineLen == 0)
-		{
+		{			
 			do
 			{
 				lineWidth += fontlib_GetGlyphWidth(*readPos++);
 				lineLen++;
 			} while (lineWidth < MAX_LINE_PIXEL_WIDTH);
+			break;
 		}
 		
 		// if there are too many words on the line to fit another, end the line
@@ -300,18 +324,14 @@ void editor_LoadScreen(char *startOfPage)
 	
 	while(lineNum < MAX_LINES_ON_EDITOR_SCREEN)
 	{
-		dbg_printf("loading line #%d\n", lineNum);
 		editor.linePointers[lineNum] = linePtr;
 		linePtr = editor_LoadLine(linePtr, &lineLen);
 		if(linePtr == NULL)
 		{
-			dbg_printf("encountered null character\n");
 			return;
 		}
 		editor.lineLengths[lineNum] = lineLen;
 		
-		lineNum++;
-		
-		dbg_printf("loaded line #%d length: %d, ptr: %p\n", lineNum, editor.lineLengths[lineNum -1], editor.linePointers[lineNum -1]);
+		lineNum++;		
 	}
 }
