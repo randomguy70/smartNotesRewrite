@@ -21,6 +21,7 @@ extern "C" {
 #define EDITOR_BODY_X               0
 #define EDITOR_BODY_Y               EDITOR_HEADER_BAR_HEIGHT
 
+#define MAX_LINES_ON_EDITOR_SCREEN  10
 #define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 4) // -4 because the cursor is 2 pixels wide, so you need 2 pixels padding on either side of the screen
 
 /* Editor Split Buffer layout
@@ -45,8 +46,8 @@ struct editor
 	char* cursorLeft, *cursorRight;
 	char* startOfPage; // position of the first character on the screen
 	
-	char *linePointers[10];
-	int lineLengths[10];
+	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN];
+	int lineLengths[MAX_LINES_ON_EDITOR_SCREEN];
 };
 extern struct editor editor;
 
@@ -66,7 +67,7 @@ void drawEditorText();
 struct menuBar *loadEditorMenuBar();
 
 /** Calculates the character length and pixel width of a word. It does take into consideration the split buffer method I am using,
- * so I don't have to worry about that with editor_GetLineLen.
+ * so I don't have to worry about that with editor_LoadLine.
  * @param readPos start of word
  * @param lenBuffer pointer to variable to store the character length
  * @param widthBuffer pointer to variable to store the pixel width
@@ -79,7 +80,7 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
  * @param lenBuffer pointer to variable to hold the line width
  * @return returns a pointer to the next line, or NULL if there are no more lines
 */
-char* editor_GetLineLen(char *readPos, int *lenBuffer);
+char* editor_LoadLine(char *readPos, int *lenBuffer);
 
 #ifdef __cplusplus
 }

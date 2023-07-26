@@ -13,6 +13,10 @@
 #include <stdbool.h>
 #include <debug.h>
 
+// calculates the character lengths of 10 lines of text
+// and stores the pointers to the lines in the editor struct
+void editor_LoadScreen(char *startOfPage);
+
 void initEditor()
 {
 	editor.menuBar = loadEditorMenuBar();
@@ -41,18 +45,16 @@ enum programState runEditor()
 	
 	// XXX DEBUG
 	drawEditor();
-	int lineLen;
-	char *nextLinePtr;
-	nextLinePtr = editor_GetLineLen(editor.cursorRight, &lineLen);
-	dbg_printf("next line: %p", nextLinePtr);
 	gfx_SetDraw(gfx_screen);
-	fontlib_SetCursorPosition(2, 25);
-	for(int i = 0; i < lineLen; i++)
+	
+	editor_LoadScreen(editor.cursorRight);
+	
+	for(int i = 0, y = 20; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= 15)
 	{
-		fontlib_DrawGlyph(*(editor.cursorRight + i));
+		fontlib_SetCursorPosition(2, y);
+		fontlib_DrawStringL(editor.linePointers[i], editor.lineLengths[i]);
+		dbg_printf("Line #%d pointer: %p, length: %d\n", i, editor.linePointers[i], editor.lineLengths[i]);
 	}
-	dbg_printf("Line Length: %d\n", lineLen);
-	dbg_printf("Cursor Right: %p\n", editor.cursorRight);
 	
 	while(!(programState == QUIT))
 	{
@@ -153,81 +155,6 @@ struct menuBar *loadEditorMenuBar()
 	return &menuBar;
 }
 
-char* editor_GetLineLen(char *readPos, int *lenBuffer)
-{
-	char *prevReadPos;
-	int lineLen = 0, lineWidth = 0;
-	int wordLen = 0, wordWidth = 0;
-	
-	// while you don't hit a newline code or the end of the file and you can fit another word on the line...keep adding
-	while(1)
-	{
-		prevReadPos = readPos;
-		readPos = editor_LoadWord(readPos, &wordLen, &wordWidth);
-		
-		// if the word fits on the line
-		if(lineWidth + wordWidth <= MAX_LINE_PIXEL_WIDTH)
-		{
-			lineLen += wordLen;
-			lineWidth += wordWidth;
-			
-			// if the word ended with a space
-			if(*readPos == ' ')
-			{
-				// if the space can fit on the line
-				if((fontlib_GetGlyphWidth(' ') + lineWidth) <= MAX_LINE_PIXEL_WIDTH)
-				{
-					readPos++;
-					lineWidth += fontlib_GetGlyphWidth(' ');
-					lineLen++;
-				}
-				// if the space can't fit on the line
-				else
-				{
-					break;
-				}
-			}
-			
-			// if we hit a new line code ('\n')
-			else if(*readPos == '\n')
-			{
-				readPos++;
-				
-				break;
-			}
-			
-			// if we hit the end of the buffer
-			else if(*readPos == '\0')
-			{
-				*lenBuffer = lineLen;
-				return NULL;
-			}
-		}
-		
-		// if it's the first word on the line and it's longer than a full line, it needs to be trimmed
-		else if(lineLen == 0)
-		{
-			do
-			{
-				lineWidth += fontlib_GetGlyphWidth(*readPos++);
-				lineLen++;
-			} while (lineWidth < MAX_LINE_PIXEL_WIDTH);
-		}
-		
-		// if there are too many words on the line to fit another, end the line
-		else
-		{
-			// go back to the last word
-			readPos = prevReadPos;
-			break;
-		}
-	}
-	
-	*lenBuffer = lineLen;
-	
-	return readPos;
-}
-
 char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 {
 	char *startPos = readPos;
@@ -273,6 +200,118 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer)
 	{
 		readPos = editor.cursorRight;
 	}
-	dbg_printf("read pos after word is %p\n", readPos);
+	
 	return readPos;
+}
+
+char* editor_LoadLine(char *readPos, int *lenBuffer)
+{
+	char *prevReadPos;
+	int lineLen = 0, lineWidth = 0;
+	int wordLen = 0, wordWidth = 0;
+	
+	// while you don't hit a newline code or the end of the file and you can fit another word on the line...keep adding
+	while(1)
+	{
+		prevReadPos = readPos;
+		readPos = editor_LoadWord(readPos, &wordLen, &wordWidth);
+		
+		// if the word fits on the line
+		if(lineWidth + wordWidth <= MAX_LINE_PIXEL_WIDTH)
+		{
+			lineLen += wordLen;
+			lineWidth += wordWidth;
+			
+			// if the word ended with a space
+			if(*readPos == ' ')
+			{
+				// if the space can fit on the line
+				if((fontlib_GetGlyphWidth(' ') + lineWidth) <= MAX_LINE_PIXEL_WIDTH)
+				{
+					readPos++;
+					lineWidth += fontlib_GetGlyphWidth(' ');
+					lineLen++;
+				}
+				// if the space can't fit on the line
+				else
+				{
+					break;
+				}
+			}
+			
+			// if we hit a new line code ('\n')
+			else if(*readPos == '\n')
+			{
+				readPos++;
+				
+				break;
+			}
+			
+			// if we hit the end of the buffer
+			else if(*readPos == '\0')
+			{
+				dbg_printf("hit EOF when loading line\n");
+				*lenBuffer = lineLen;
+				return NULL;
+			}
+			
+			else
+			{
+				dbg_printf("something else happened");
+				return NULL;
+			}
+		}
+		
+		// if it's the first word on the line and it's longer than a full line, it needs to be trimmed
+		else if(lineLen == 0)
+		{
+			do
+			{
+				lineWidth += fontlib_GetGlyphWidth(*readPos++);
+				lineLen++;
+			} while (lineWidth < MAX_LINE_PIXEL_WIDTH);
+		}
+		
+		// if there are too many words on the line to fit another, end the line
+		else
+		{
+			// go back to the last word
+			readPos = prevReadPos;
+			break;
+		}
+	}
+	
+	*lenBuffer = lineLen;
+	
+	return readPos;
+}
+
+void editor_LoadScreen(char *startOfPage)
+{
+	int lineNum = 0, lineLen = 0;
+	char *linePtr = startOfPage;
+	
+	// we already know where the first line starts...
+	editor.linePointers[0] = startOfPage;
+	linePtr = editor_LoadLine(startOfPage, &lineLen);
+	editor.lineLengths[0] = lineLen;
+	
+	lineNum++;
+	
+	while(lineNum < MAX_LINES_ON_EDITOR_SCREEN)
+	{
+		dbg_printf("loading line #%d\n", lineNum);
+		editor.linePointers[lineNum] = linePtr;
+		linePtr = editor_LoadLine(linePtr, &lineLen);
+		if(linePtr == NULL)
+		{
+			dbg_printf("encountered null character\n");
+			return;
+		}
+		editor.lineLengths[lineNum] = lineLen;
+		
+		lineNum++;
+		
+		dbg_printf("loaded line #%d length: %d, ptr: %p\n", lineNum, editor.lineLengths[lineNum -1], editor.linePointers[lineNum -1]);
+	}
 }
