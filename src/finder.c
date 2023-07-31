@@ -114,21 +114,20 @@ enum programState runFinder(void)
 	float deltaTime;
 	int fps;
 	
-	refreshAllFinderGraphics();
-	
 	bool refreshAll = false;
 	bool refreshWindow = false;
 	bool reloadFiles = false;
 	bool refreshMenuBar = false;
 	
-	// reset timer
+	refreshAllFinderGraphics();
+	
+	// reset, enable, and set timer to count up @ 32768 Hz
 	timer_Set(1, 0);
-	//Enable the timer while setting it to 32768 Hz and making it count up
 	timer_Enable(1, TIMER_32K, TIMER_0INT, TIMER_UP);
 	
 	while(1)
 	{
-		// need to figure out optimized order of graphic refresh checks
+		// XXX need to figure out optimized order of graphic refresh checks
 		
 		if(refreshAll == true)
 		{
@@ -163,7 +162,7 @@ enum programState runFinder(void)
 			gfx_Blit(gfx_buffer);
 		}
 		
-		// FPS meter (takes off more than 20 fps)
+		// FPS meter (takes off a lot of FPS by itself)
 		
 		time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
 		deltaTime = time - prevTime;
@@ -227,8 +226,9 @@ enum programState runFinder(void)
 			{
 				continue;
 			}
-			// XXX add action requests for menu bar
-			else if(activeIndex == 0 || activeIndex == 1 || activeIndex == 2)
+			
+			// About button
+			else if(activeIndex == 0)
 			{
 				break;
 			}
@@ -248,7 +248,7 @@ struct menuBar *loadFinderMenuBar(void)
 		.menues = 
 		{
 			{
-				.name = "Exit",
+				.name = "About",
 				.numOptions = 0
 			},
 			{

@@ -1,6 +1,8 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include "main.h"
+
 #include <stdbool.h>
 #include <graphx.h>
 #include <stdint.h>
@@ -9,6 +11,10 @@
 extern "C" {
 #endif
 
+// max number of options in a single menu bubble
+#define MAX_MENU_OPTIONS          10
+
+// number of menue buttons stored in a menu bar
 #define NUM_MENU_BAR_ENTRIES      5
 #define MENU_BAR_ENTRY_SPACING    (GFX_LCD_WIDTH / NUM_MENU_BAR_ENTRIES)
 #define MENU_BAR_HEIGHT           16
@@ -31,14 +37,16 @@ extern "C" {
 #define MENU_ENTRY_HEIGHT         MENU_ENTRY_VERT_SPACING
 #define MENU_X                    ((GFX_LCD_WIDTH - MENU_WIDTH) / 2)
 
+typedef enum programState(*menuFuncPtr)(void);
+
 struct menu
 {
 	char *name;
-	char options[10][10];
+	char options[MAX_MENU_OPTIONS][10];
 	uint8_t numOptions;
 	uint8_t displayOffset;
 	uint8_t selected;
-	void *funcPtrs[];
+	enum programState menuFuncPtrs[MAX_MENU_OPTIONS];
 };
 
 struct menuBar

@@ -21,7 +21,7 @@ extern "C" {
 #define EDITOR_BODY_X               0
 #define EDITOR_BODY_Y               EDITOR_HEADER_BAR_HEIGHT
 
-#define MAX_LINES_ON_EDITOR_SCREEN  14
+#define MAX_LINES_ON_EDITOR_SCREEN  13
 #define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 4) // -4 because the cursor is 2 pixels wide, so you need 2 pixels padding on either side of the screen
 
 /* Editor Split Buffer layout
