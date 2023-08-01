@@ -17,6 +17,7 @@ void drawFinderWindow(void);
 void displayFiles(void);
 void dealWithScrollUp(void);
 void dealWithScrollDown(void);
+enum programState dealWithMenuBar(struct menuBar *menuBar);
 
 enum programState runFinder(void)
 {
@@ -69,17 +70,9 @@ enum programState runFinder(void)
 		dealWithScrollUp();
 		dealWithScrollDown();
 		
-		// check for menu bar press
 		if(menuBarWasPressed())
 		{
-			int activeIndex = getMenuBarPress();
-			
-			// About button
-			if(activeIndex == 0)
-			{
-				break;
-			}
-			
+			int activeIndex = getMenuBarIndex();
 			runMenuBar(finder.menuBar, activeIndex);
 			finder.refreshAll = true;
 		}
@@ -87,7 +80,6 @@ enum programState runFinder(void)
 	
 	return QUIT;
 }
-
 
 void initFinder(void)
 {
@@ -233,6 +225,7 @@ struct menuBar *loadFinderMenuBar(void)
 {
 	static struct menuBar menuBar = 
 	{
+		.backgroundRefreshFunc = &redrawFinder,
 		.menues = 
 		{
 			{
@@ -274,7 +267,7 @@ struct menuBar *loadFinderMenuBar(void)
 					"Reason",
 				}
 			}
-		}
+		},
 	};
 	
 	return &menuBar;

@@ -9,7 +9,6 @@
 #include <keypadc.h>
 #include <stdint.h>
 
-
 void drawMenuBar(struct menuBar *menuBar, int activeIndex)
 {
 	int spacing = GFX_LCD_WIDTH / NUM_MENU_BAR_ENTRIES;
@@ -17,7 +16,7 @@ void drawMenuBar(struct menuBar *menuBar, int activeIndex)
 	int nameY = 229;
 	int nameX;
 	char *name;
-	int pressedButton = getMenuBarPress();
+	int pressedButton = getMenuBarIndex();
 	int selecterX, selecterY;
 	
 	// rectangle at bottom of screen
@@ -65,11 +64,7 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 		if(redrawBackground)
 		{
 			redrawBackground = false;
-			
-			if(programState == FINDER)
-			{
-				redrawFinder();
-			}
+			menuBar->backgroundRefreshFunc();
 		}
 		if(redrawForeground)
 		{
@@ -81,13 +76,18 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 			gfx_Blit(gfx_buffer);
 		}
 		
+		// keypresses
+		
 		kb_Scan();
 		
 		// quit menu
 		if(kb_IsDown(kb_KeyClear))
 		{
-			while(kb_IsDown(kb_KeyClear)) kb_Scan();
-			return 0;
+			while(kb_IsDown(kb_KeyClear))
+			{
+				kb_Scan();
+			}
+			return CANCEL;
 		}
 		
 		// scroll up
@@ -145,7 +145,7 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 		// jump to menu with button press
 		else if(menuBarWasPressed())
 		{
-			int newIndex = getMenuBarPress();
+			int newIndex = getMenuBarIndex();
 			if(newIndex != -1 && newIndex != activeIndex && menuBar->menues[newIndex].numOptions > 0)
 			{
 				activeIndex = newIndex;
@@ -203,7 +203,7 @@ bool menuBarWasPressed(void)
 	return kb_Data[1] ? true : false;
 }
 
-int getMenuBarPress(void)
+int getMenuBarIndex(void)
 {
 	uint8_t buttonKeys[NUM_MENU_BAR_ENTRIES] = {kb_Yequ, kb_Window, kb_Zoom, kb_Trace, kb_Graph};
 	

@@ -39,6 +39,8 @@ extern "C" {
 
 typedef enum programState(*menuFuncPtr)(void);
 
+// single menu (a list of options)
+// clicking on an option runs the function specific to that option
 struct menu
 {
 	char *name;
@@ -49,12 +51,23 @@ struct menu
 	enum programState menuFuncPtrs[MAX_MENU_OPTIONS];
 };
 
-struct menuBar
+/**
+ * A collection of 5 menues / Actions
+ * Ex: About,  Help,   Settings,  File,    Edit
+ *       ^       ^        ^         ^        ^
+ *       |       |        |         |        |
+ *    Action   Action   Menu      Menu     Menu
+ * 
+ * Clicking on an action runs a function immediately and returns, whereas clicking on a menu allows the user to scroll through more options
+*/ 
+
+  struct menuBar
 {
 	struct menu menues[5];
+	void (*backgroundRefreshFunc)(void);
 };
 
-/***
+   /***
  * @param menuBar     Pointer to a menu bar struct returned from a menu bar loader function
  * @param activeIndex Index of menu being run. If no menu is being run, pass -1 instead. This is used to color the button under an active menu.
 */
@@ -64,7 +77,7 @@ void drawMenuBar(struct menuBar *menuBar, int activeIndex);
 enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex);
 
 // returns -1 if failure, otherwise returns the index of the menu bar option to open
-int getMenuBarPress(void);
+int getMenuBarIndex(void);
 
 bool menuBarWasPressed(void);
 
