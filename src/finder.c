@@ -13,10 +13,144 @@
 #include <sys/timers.h>
 
 void drawFinderBackground(void);
-void drawFinderWindow();
-void displayFiles();
-bool scrollUp();
-bool scrollDown();
+void drawFinderWindow(void);
+void displayFiles(void);
+void dealWithScrollUp(void);
+void dealWithScrollDown(void);
+
+enum programState runFinder(void)
+{
+	float time;
+	float prevTime = 0;
+	float deltaTime;
+	int fps;
+	
+	redrawFinder();
+	
+	// reset, enable, and set timer to count up @ 32768 Hz
+	timer_Set(1, 0);
+	timer_Enable(1, TIMER_32K, TIMER_0INT, TIMER_UP);
+	
+	while(1)
+	{
+		updateFinder();
+		
+		// FPS meter (takes off a lot of FPS by itself)
+		// XXX will make into a single function with static variables so it can be called anywhere
+		{
+			time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
+			deltaTime = time - prevTime;
+			prevTime = time;
+			fps = (int)(1 / deltaTime);
+			
+			gfx_SetDrawBuffer();
+			gfx_SetColor(black);
+			gfx_FillRectangle_NoClip(0, 0, 50, 10);
+			gfx_SetTextFGColor(white);
+			gfx_SetTextXY(1, 1);
+			gfx_PrintInt(fps, 3);
+			gfx_BlitRectangle(gfx_buffer, 0, 0, 50, 10);
+		}
+		
+		kb_Scan();
+		
+		// quit
+		if(kb_IsDown(kb_KeyClear))
+		{
+			return QUIT;
+		}
+		
+		// open file
+		if(kb_IsDown(kb_KeyEnter))
+		{
+			return EDITOR;
+		}
+		
+		dealWithScrollUp();
+		dealWithScrollDown();
+		
+		// check for menu bar press
+		if(menuBarWasPressed())
+		{
+			int activeIndex = getMenuBarPress();
+			
+			// About button
+			if(activeIndex == 0)
+			{
+				break;
+			}
+			
+			runMenuBar(finder.menuBar, activeIndex);
+			finder.refreshAll = true;
+		}
+	}
+	
+	return QUIT;
+}
+
+
+void initFinder(void)
+{
+	finder.numFiles = loadFiles(finder.files);
+	finder.fileOffset = 0;
+	finder.selectedFile = 0;
+	finder.selectedWasPressed = false;
+	
+	finder.refreshAll = false;
+	finder.refreshWindow = false;
+	finder.reloadFiles = false;
+	finder.refreshMenuBar = false;
+	
+	finder.lastScrollDir = noScrollDir;
+	finder.lastScrollType = noScrollType;
+	finder.timeSinceScroll = 0;
+	finder.menuBar = loadFinderMenuBar();
+}
+
+void updateFinder(void)
+{
+	if(finder.reloadFiles == true)
+	{
+		finder.reloadFiles = false;
+		finder.numFiles = loadFiles(finder.files);
+		
+		finder.refreshWindow = true;
+	}
+	
+	if(finder.refreshAll == true || (finder.refreshWindow == true && finder.refreshMenuBar == true))
+	{
+		finder.refreshAll = false;
+		finder.refreshWindow = false;
+		finder.refreshMenuBar = false;
+		
+		redrawFinder();
+	}
+	else if(finder.refreshWindow == true)
+	{
+		finder.refreshWindow = false;
+		
+		gfx_SetDraw(gfx_buffer);
+		drawFinderWindow();
+		gfx_Blit(gfx_buffer);
+	}
+	else if(finder.refreshMenuBar == true)
+	{
+		finder.refreshMenuBar = false;
+		
+		gfx_SetDrawBuffer();
+		drawMenuBar(finder.menuBar, -1);
+		gfx_Blit(gfx_buffer);
+	}
+}
+
+void redrawFinder(void)
+{
+	gfx_SetDrawBuffer();
+	drawFinderBackground();
+	drawFinderWindow();
+	drawMenuBar(finder.menuBar, -1);
+	gfx_Blit(gfx_buffer);
+}
 
 void drawFinderBackground(void)
 {
@@ -25,7 +159,7 @@ void drawFinderBackground(void)
 	gfx_FillRectangle_NoClip(0, 0, GFX_LCD_WIDTH, GFX_LCD_HEIGHT);
 }
 
-void drawFinderWindow()
+void drawFinderWindow(void)
 {
 	// draw window & title
 	window(FINDER_WINDOW_X, FINDER_WINDOW_Y, FINDER_WINDOW_WIDTH, FINDER_WINDOW_HEIGHT, FINDER_WINDOW_BORDER_RADIUS, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor);
@@ -36,7 +170,7 @@ void drawFinderWindow()
 	displayFiles();
 }
 
-void displayFiles()
+void displayFiles(void)
 {
 	int fileEntryX = FINDER_WINDOW_X + FILE_NAME_PADDING_LEFT;
 	int fileEntryY = FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + (FILE_SPACING - 8) / 2;
@@ -60,30 +194,23 @@ void displayFiles()
 	}
 }
 
-void initFinder(void)
-{
-	finder.numFiles = loadFiles(finder.files);
-	finder.fileOffset = 0;
-	finder.selectedFile = 0;
-	finder.selectedWasPressed = false;
-	finder.lastScrollDir = noScrollDir;
-	finder.lastScrollType = noScrollType;
-	finder.timeSinceScroll = 0;
-	finder.menuBar = loadFinderMenuBar();
-}
-
-bool scrollUp()
+void dealWithScrollUp(void)
 {
 	// up arrow needs to be pressed, and the selector can't be on the first file
 	if(kb_IsDown(kb_KeyUp) && (finder.selectedFile > 0))
 	{
-		return true;
+		finder.selectedFile--;
+		if(finder.selectedFile < finder.fileOffset)
+		{
+			finder.fileOffset--;
+		}
+		
+		finder.lastScrollDir = scrollDirUp;
+		finder.refreshWindow = true;
 	}
-	
-	return false;
 }
 
-bool scrollDown()
+void dealWithScrollDown(void)
 {
 	// need the down key to be pressed, and NOT the up key!!!
 	if(kb_IsDown(kb_KeyDown) && !kb_IsDown(kb_KeyUp))
@@ -91,154 +218,15 @@ bool scrollDown()
 		// if there aren't too many files and the scrollbar isn't on the last one
 		if(finder.selectedFile < 30 && finder.selectedFile < finder.numFiles - 1)
 		{
-			return true;
-		}
-	}
-	
-	return false;
-}
-
-void refreshAllFinderGraphics(void)
-{
-	gfx_SetDrawBuffer();
-	drawFinderBackground();
-	drawFinderWindow();
-	drawMenuBar(finder.menuBar, -1);
-	gfx_Blit(gfx_buffer);
-}
-
-enum programState runFinder(void)
-{
-	float time;
-	float prevTime = 0;
-	float deltaTime;
-	int fps;
-	
-	bool refreshAll = false;
-	bool refreshWindow = false;
-	bool reloadFiles = false;
-	bool refreshMenuBar = false;
-	
-	refreshAllFinderGraphics();
-	
-	// reset, enable, and set timer to count up @ 32768 Hz
-	timer_Set(1, 0);
-	timer_Enable(1, TIMER_32K, TIMER_0INT, TIMER_UP);
-	
-	while(1)
-	{
-		// XXX need to figure out optimized order of graphic refresh checks
-		
-		if(refreshAll == true)
-		{
-			refreshAll = false;
-			refreshWindow = false;
-			refreshMenuBar = false;
-			refreshAllFinderGraphics();
-		}
-		else if(refreshWindow == true)
-		{
-			refreshWindow = false;
-			
-			gfx_SetDraw(gfx_buffer);
-			drawFinderWindow();
-			gfx_Blit(gfx_buffer);
-		}
-		if(reloadFiles == true)
-		{
-			reloadFiles = false;
-			finder.numFiles = loadFiles(finder.files);
-			
-			gfx_SetDraw(gfx_buffer);
-			drawFinderWindow();
-			gfx_Blit(gfx_buffer);
-		}
-		if(refreshMenuBar == true)
-		{
-			refreshMenuBar = false;
-			
-			gfx_SetDrawBuffer();
-			drawMenuBar(finder.menuBar, -1);
-			gfx_Blit(gfx_buffer);
-		}
-		
-		// FPS meter (takes off a lot of FPS by itself)
-		
-		time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
-		deltaTime = time - prevTime;
-		prevTime = time;
-		fps = (int)(1 / deltaTime);
-		
-		gfx_SetDrawBuffer();
-		gfx_SetColor(black);
-		gfx_FillRectangle_NoClip(0, 0, 50, 10);
-		gfx_SetTextFGColor(white);
-		gfx_SetTextXY(1, 1);
-		gfx_PrintInt(fps, 3);
-		gfx_BlitRectangle(gfx_buffer, 0, 0, 50, 10);
-		
-		kb_Scan();
-		
-		// quit
-		if(kb_IsDown(kb_KeyClear))
-		{
-			return QUIT;
-		}
-		
-		// open file
-		if(kb_IsDown(kb_KeyEnter))
-		{
-			return EDITOR;
-		}
-		
-		// scrolling up
-		if(scrollUp())
-		{
-			finder.selectedFile--;
-			if(finder.selectedFile < finder.fileOffset)
-			{
-				finder.fileOffset--;
-			}
-			
-			finder.lastScrollDir = scrollDirUp;
-			refreshWindow = true;
-			continue;
-		}
-		
-		// scrolling down
-		if(scrollDown())
-		{
 			finder.selectedFile++;
 			if(finder.selectedFile >= finder.fileOffset + MAX_FILES_ON_SCREEN)
 			{
 				finder.fileOffset++;
 			}
 			
-			refreshWindow = true;
-			continue;
-		}
-		
-		// check for menu bar press
-		if(menuBarWasPressed())
-		{
-			int activeIndex = getMenuBarPress();
-			if(activeIndex == -1)
-			{
-				continue;
-			}
-			
-			// About button
-			else if(activeIndex == 0)
-			{
-				break;
-			}
-			
-			runMenuBar(finder.menuBar, activeIndex);
-			refreshAll = true;
+			finder.refreshWindow = true;
 		}
 	}
-	
-	return QUIT;
 }
 
 struct menuBar *loadFinderMenuBar(void)

@@ -68,7 +68,7 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 			
 			if(programState == FINDER)
 			{
-				refreshAllFinderGraphics();
+				redrawFinder();
 			}
 		}
 		if(redrawForeground)
@@ -200,12 +200,7 @@ void drawMenu(struct menu *menu, uint8_t activeIndex)
 
 bool menuBarWasPressed(void)
 {
-	if(kb_Data[1])
-	{
-		return true;
-	}
-	
-	return false;
+	return kb_Data[1] ? true : false;
 }
 
 int getMenuBarPress(void)

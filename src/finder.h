@@ -39,6 +39,11 @@ struct finder
 	uint8_t selectedFile;
 	bool selectedWasPressed;
 	
+	bool refreshAll;
+	bool refreshWindow;
+	bool reloadFiles;
+	bool refreshMenuBar;
+	
 	enum scrollDir lastScrollDir;
 	enum scrollType lastScrollType;
 	float timeSinceScroll;
@@ -50,7 +55,10 @@ extern struct finder finder;
 
 enum programState runFinder(void);
 void initFinder(void);
-void refreshAllFinderGraphics(void);
+
+// updates the parts of the finder that need to be updated
+void updateFinder(void);
+void redrawFinder(void);
 struct menuBar *loadFinderMenuBar(void);
 
 #ifdef __cplusplus
