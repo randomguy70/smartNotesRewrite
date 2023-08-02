@@ -17,7 +17,6 @@ void drawFinderWindow(void);
 void displayFiles(void);
 void dealWithScrollUp(void);
 void dealWithScrollDown(void);
-enum programState dealWithMenuBar(struct menuBar *menuBar);
 
 enum programState runFinder(void)
 {
@@ -73,8 +72,16 @@ enum programState runFinder(void)
 		if(menuBarWasPressed())
 		{
 			int activeIndex = getMenuBarIndex();
-			runMenuBar(finder.menuBar, activeIndex);
-			finder.refreshAll = true;
+			enum programState state = runMenuBar(finder.menuBar, activeIndex);
+			
+			if(state == QUIT)          {return QUIT;}
+			else if(state == EDITOR)   {return EDITOR;}
+			else if(state == SETTINGS) {return SETTINGS;}
+			else
+			{
+				finder.refreshAll = true;
+				continue;
+			}
 		}
 	}
 	
@@ -230,15 +237,27 @@ struct menuBar *loadFinderMenuBar(void)
 		{
 			{
 				.name = "About",
-				.numOptions = 0
+				.numOptions = 0,
+				.funcPtrs = 
+				{
+					NULL
+				}
 			},
 			{
 				.name = "Help",
 				.numOptions = 0,
+				.funcPtrs = 
+				{
+					NULL
+				}
 			},
 			{
 				.name = "Settings",
 				.numOptions = 0,
+				.funcPtrs = 
+				{
+					NULL
+				}
 			},
 			{
 				.name = "File",
@@ -251,6 +270,15 @@ struct menuBar *loadFinderMenuBar(void)
 					"Hide",
 					"Info",
 					"Delete",
+				},
+				.funcPtrs = 
+				{
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
 				}
 			},
 			{
@@ -265,6 +293,16 @@ struct menuBar *loadFinderMenuBar(void)
 					"For",
 					"No",
 					"Reason",
+				},
+				.funcPtrs = 
+				{
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
 				}
 			}
 		},
@@ -272,3 +310,5 @@ struct menuBar *loadFinderMenuBar(void)
 	
 	return &menuBar;
 }
+
+/////////////// Finder Menu Functions ///////////////

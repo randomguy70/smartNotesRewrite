@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <keypadc.h>
 #include <stdint.h>
+#include <debug.h>
 
 void drawMenuBar(struct menuBar *menuBar, int activeIndex)
 {
@@ -48,7 +49,9 @@ void drawMenuBar(struct menuBar *menuBar, int activeIndex)
 
 enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 {
+	// simplify things by having a pointer to the current menu that's being scrolled through
 	struct menu *menu = &menuBar->menues[activeIndex];
+	
 	bool redrawBackground = false;
 	bool redrawForeground = false;
 	
@@ -56,6 +59,24 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 	drawMenuBar(menuBar, activeIndex);
 	drawMenu(menu, activeIndex);
 	gfx_Blit(gfx_buffer);
+	
+	// if the menu button pressed has no menu options, it points to single function/action, not a menu
+	// in this case, just run the first function in its function array
+	if(menu->numOptions == 0)
+	{
+		if(menu->funcPtrs[0] != NULL)
+		{
+			return (menu->funcPtrs[0])();
+		}
+		else
+		{
+			while(kb_Data[1])
+			{
+				kb_Scan();
+			}
+			return CANCEL;
+		}
+	}
 	
 	while(1)
 	{
@@ -80,8 +101,26 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 		
 		kb_Scan();
 		
+		// if the user hits enter, run the function for that option
+		if(kb_IsDown(kb_KeyEnter) || kb_IsDown(kb_Key2nd))
+		{
+			while(kb_IsDown(kb_KeyEnter) || kb_IsDown(kb_Key2nd))
+			{
+				kb_Scan();
+			}
+			
+			if(menu->funcPtrs[menu->selected] != NULL)
+			{
+				return (menu->funcPtrs[menu->selected])();
+			}
+			else
+			{
+				return CANCEL;
+			}
+		}
+		
 		// quit menu
-		if(kb_IsDown(kb_KeyClear))
+		else if(kb_IsDown(kb_KeyClear))
 		{
 			while(kb_IsDown(kb_KeyClear))
 			{
@@ -163,6 +202,12 @@ void drawMenu(struct menu *menu, uint8_t activeIndex)
 	const int height = (menu->numOptions >= MAX_MENU_ENTRIES_ON_SCRN) ? (MAX_MENU_HEIGHT) : (MENU_ENTRY_VERT_SPACING * menu->numOptions);
 	int menuX = MENU_BAR_ENTRY_SPACING * activeIndex + ((MENU_BAR_ENTRY_SPACING - MENU_WIDTH) / 2);
 	int menuY = GFX_LCD_HEIGHT - MENU_BAR_HEIGHT - height - 1;
+	
+	// make sure that the menu has at least 1 option to choose from
+	if(menu->numOptions == 0)
+	{
+		return;
+	}
 	
 	// make sure the menu stays on the screen (with 1 pixel margin)
 	if(menuX + MENU_WIDTH >= GFX_LCD_WIDTH - 1)

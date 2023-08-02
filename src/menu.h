@@ -37,8 +37,6 @@ extern "C" {
 #define MENU_ENTRY_HEIGHT         MENU_ENTRY_VERT_SPACING
 #define MENU_X                    ((GFX_LCD_WIDTH - MENU_WIDTH) / 2)
 
-typedef enum programState(*menuFuncPtr)(void);
-
 // single menu (a list of options)
 // clicking on an option runs the function specific to that option
 struct menu
@@ -48,7 +46,9 @@ struct menu
 	uint8_t numOptions;
 	uint8_t displayOffset;
 	uint8_t selected;
-	enum programState menuFuncPtrs[MAX_MENU_OPTIONS];
+	
+	// array of function pointers returning a programState and taking no parameters
+	enum programState (*funcPtrs[MAX_MENU_OPTIONS]) (void);
 };
 
 /**
@@ -59,7 +59,7 @@ struct menu
  *    Action   Action   Menu      Menu     Menu
  * 
  * Clicking on an action runs a function immediately and returns, whereas clicking on a menu allows the user to scroll through more options
-*/ 
+*/
 
   struct menuBar
 {
