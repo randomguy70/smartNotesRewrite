@@ -2,7 +2,7 @@
 
 #include "finder.h"
 #include "colors.h"
-#include "shapes.h"
+#include "ui.h"
 #include "main.h"
 
 #include <stdbool.h>

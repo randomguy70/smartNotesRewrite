@@ -1,6 +1,6 @@
 #include "main.h"
 
-#include "shapes.h"
+#include "ui.h"
 #include "colors.h"
 #include "gfx/gfx.h"
 #include "finder.h"

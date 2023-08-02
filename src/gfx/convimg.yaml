@@ -9,7 +9,7 @@ palettes:
       - color: {index:   2, r: 255, g: 255, b: 255}    # white
       - color: {index:   3, r: 200, g: 200, b: 200}    # finder window header
       - color: {index:   4, r: 255, g: 255, b: 255}    # finder window body
-      - color: {index:   5, r: 100, g: 100, b: 100}    # finder outline
+      - color: {index:   5, r: 115, g: 115, b: 115}    # finder window outline
       - color: {index:   6, r: 170, g: 170, b: 170}    # finder background
       - color: {index:   7, r:  30, g: 120, b: 255}    # finder selector color
       - color: {index:   8, r:   0, g:   0, b:   0}    # finder text color

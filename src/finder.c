@@ -1,7 +1,7 @@
 #include "finder.h"
 
 #include "file.h"
-#include "shapes.h"
+#include "ui.h"
 #include "colors.h"
 #include "main.h"
 #include "menu.h"
@@ -11,12 +11,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/timers.h>
+#include <string.h>
+#include <debug.h>
 
+// regular functions
 void drawFinderBackground(void);
 void drawFinderWindow(void);
 void displayFiles(void);
 void dealWithScrollUp(void);
 void dealWithScrollDown(void);
+
+// menu functions
+enum programState aboutWindow(void);
 
 enum programState runFinder(void)
 {
@@ -161,11 +167,7 @@ void drawFinderBackground(void)
 void drawFinderWindow(void)
 {
 	// draw window & title
-	window(FINDER_WINDOW_X, FINDER_WINDOW_Y, FINDER_WINDOW_WIDTH, FINDER_WINDOW_HEIGHT, FINDER_WINDOW_BORDER_RADIUS, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor);
-	char* finderWindowName = "Finder";
-	gfx_SetTextFGColor(black);
-	gfx_PrintStringXY(finderWindowName, GFX_LCD_WIDTH / 2 - gfx_GetStringWidth(finderWindowName) / 2, FINDER_WINDOW_Y + 5);
-	
+	window(FINDER_WINDOW_X, FINDER_WINDOW_Y, FINDER_WINDOW_WIDTH, FINDER_WINDOW_HEIGHT, FINDER_WINDOW_BORDER_RADIUS, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor, "Finder");
 	displayFiles();
 }
 
@@ -240,7 +242,7 @@ struct menuBar *loadFinderMenuBar(void)
 				.numOptions = 0,
 				.funcPtrs = 
 				{
-					NULL
+					&aboutWindow
 				}
 			},
 			{
@@ -312,3 +314,32 @@ struct menuBar *loadFinderMenuBar(void)
 }
 
 /////////////// Finder Menu Functions ///////////////
+enum programState aboutWindow(void)
+{
+	int windowWidth = 150, windowHeight = 80;
+	int windowX = GFX_LCD_WIDTH / 2 - windowWidth / 2;
+	int windowY = GFX_LCD_HEIGHT / 2 - windowHeight / 2;
+	
+	gfx_SetDrawBuffer();
+	window(windowX, windowY, windowWidth, windowHeight, 12, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor, "About");
+	
+	char str[150] = "SmartNotes CE V.1.0, created by JohnPaul Malloy (randomguy70). Enjoy! Compiled ";
+	strcat(str, __DATE__);
+	strcat(str, ", ");
+	strcat(str, __TIME__);
+	strcat(str, ".");
+	
+	drawWrappedText(str, windowX + 2, windowY + 13, windowWidth - 4, windowHeight - 13);
+	
+	gfx_BlitBuffer();
+	
+	while(!kb_IsDown(kb_KeyClear))
+	{
+		kb_Scan();
+	}
+	while(kb_IsDown(kb_KeyClear))
+	{
+		kb_Scan();
+	}
+	return CANCEL;
+}

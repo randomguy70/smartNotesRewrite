@@ -1,7 +1,8 @@
-#include "shapes.h"
+#include "ui.h"
 #include "colors.h"
 
 #include <graphx.h>
+#include <debug.h>
 
 void roundedRectangle(int x, int y, int width, int height, int borderRadius)
 {
@@ -85,7 +86,7 @@ void outlinedRoundedRectangle(int x, int y, int width, int height, int borderRad
 	gfx_FillRectangle_NoClip(x + width - borderRadius - 1, y + borderRadius, borderRadius, height - 2 * borderRadius);
 }
 
-void window(int x, int y, int width, int height, int borderRadius, enum color headerColor, enum color bodyColor, enum color outlineColor)
+void window(int x, int y, int width, int height, int borderRadius, enum color headerColor, enum color bodyColor, enum color outlineColor, char *title)
 {
 	// -------------------------------
 	// corners
@@ -154,6 +155,15 @@ void window(int x, int y, int width, int height, int borderRadius, enum color he
 	
 	// right rectangle
 	gfx_FillRectangle_NoClip(x + width - 1 - borderRadius, y + borderRadius, borderRadius, height - 2 * borderRadius);
+
+	// -------------------------------
+	// title text
+	int titleWidth = gfx_GetStringWidth(title);
+	int titleX = (x + (width - titleWidth) / 2);
+	int titleY = y + (borderRadius / 2) - 3;
+	gfx_SetTextXY(titleX, titleY);
+	gfx_SetTextFGColor(black);
+	gfx_PrintString(title);
 }
 
 void chippedRectangle(int x, int y, int width, int height)
@@ -172,4 +182,91 @@ void chippedRectangle(int x, int y, int width, int height)
 	
 	// right edge
 	gfx_VertLine_NoClip(x + width - 1, y + 1, height - 2);
+}
+
+void drawWrappedText(char *str, int x, int y, int width, int height)
+{
+	int cursorY = y;
+	char *nextLine = str;
+	int lineLen;
+	int i;
+	
+	gfx_SetTextFGColor(black);
+	gfx_SetTextXY(x, y);
+	
+	while ((cursorY < y + height - 9) && (str != NULL))
+	{
+		nextLine = getStrLine(str, &lineLen, width);
+		dbg_printf("Line len: %d", lineLen);
+		for(i = 0; i < lineLen; i++)
+		{
+			gfx_PrintChar(str[i]);
+		}
+		str = nextLine;
+		cursorY += 10;
+		gfx_SetTextXY(x, cursorY);
+	}
+}
+
+char *getStrWord(char *str, int *widthBuffer, int *lenBuffer)
+{
+	(*widthBuffer) = 0;
+	(*lenBuffer )= 0;
+	int len = 0, width = 0;
+	
+	if(*str == ' ')
+	{
+		*widthBuffer = gfx_GetCharWidth(' ');
+		*lenBuffer = 1;
+		return ++str;
+	}
+	
+	while((*str != '\0') && (*str != ' '))
+	{
+		width += gfx_GetCharWidth(*str);
+		len++;
+		str++;
+	}
+	
+	(*widthBuffer) = width;
+	(*lenBuffer) = len;
+	
+	return str;
+}
+
+char *getStrLine(char *str, int *lenBuffer, int textBoxWidth)
+{
+	char *prevStr = str;
+	int wordWidth, wordLen, lineLen = 0, lineWidth = 0;
+	*lenBuffer = 0;
+	
+	while(*str != '\0' && str != NULL)
+	{
+		str = getStrWord(str, &wordWidth, &wordLen);
+		if(lineWidth + wordWidth <= textBoxWidth)
+		{
+			lineWidth += wordWidth;
+			lineLen += wordLen;
+			prevStr = str;
+		}
+		else if(lineLen == 0 && wordWidth > textBoxWidth)
+		{
+			while(lineWidth + (int)gfx_GetCharWidth(*prevStr) <= textBoxWidth)
+			{
+				lineWidth +=  gfx_GetCharWidth(*prevStr);
+				lineLen++;
+				prevStr++;
+			}
+			*lenBuffer = lineLen;
+			return prevStr;
+		}
+		else
+		{
+			*lenBuffer = lineLen;
+			return prevStr;
+		}
+	}
+	
+	(*lenBuffer) = lineLen;
+	return NULL;
 }
