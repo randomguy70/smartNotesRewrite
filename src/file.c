@@ -11,29 +11,26 @@
 uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
 {
 	uint8_t numFiles = 0;
-	char *namePtr = NULL;
+	char *osName = NULL;
 	void *search_pos = NULL;
+	uint8_t fileSlot;
 	
-	while ((namePtr = ti_Detect(&search_pos, FILE_DETECT_STRING)) != NULL)
+	while ((osName = ti_Detect(&search_pos, FILE_DETECT_STRING)) != NULL)
 	{
-		if (numFiles > 30)
+		if (numFiles > MAX_FILES_LOADABLE)
 		{
 			return numFiles;
 		}
 		
-		strcpy(files[numFiles].name, namePtr);
-		
-		// XXX in the future I will display the 16 digit aesthetic filename
-		
-		// if(isHidden(files[numFiles].view_name))
-		// {
-		// 	files[numFiles].view_name[0] ^= 64;
-		// 	files[numFiles].isHidden = true;
-		// }
-		// else
-		// {
-		// 	files[numFiles].isHidden = false;
-		// }
+		// store the file's os name (the name the calculator uses to identify files)
+		strcpy(files[numFiles].osName, osName);
+		// store the aesthetic name (the name the user sees)
+		fileSlot = ti_Open(files[numFiles].osName, "r");
+		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, fileSlot);
+		ti_Read(files[numFiles].aestheticName, (AESTHETIC_FILE_NAME_LEN - 1), 1, fileSlot);
+		ti_Close(fileSlot);
+		// don't forget the null byte after the aesthetic name string
+		files[numFiles].aestheticName[AESTHETIC_FILE_NAME_LEN - 1] = '\0';
 		
 		numFiles++;
 		
@@ -46,7 +43,7 @@ void loadFileData(struct file *file)
 {
 	// check if it exists
 	
-	uint8_t slot = ti_Open(file->name, "r");
+	uint8_t slot = ti_Open(file->osName, "r");
 	if(!slot)
 	{
 		programState = QUIT;
@@ -109,7 +106,7 @@ bool isHidden(char* name)
 	return (name[0])<(65);
 }
 
-void archiveAll(void)
+void archiveAllFiles(void)
 {
 	void *searchPtr = NULL;
 	char *namePtr = NULL;

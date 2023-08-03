@@ -190,7 +190,7 @@ void displayFiles(void)
 		{
 			gfx_SetTextFGColor(black);
 		}
-		gfx_PrintStringXY(finder.files[i].name, fileEntryX, fileEntryY);
+		gfx_PrintStringXY(finder.files[i].aestheticName, fileEntryX, fileEntryY);
 		fileEntryY += FILE_SPACING;
 	}
 }
@@ -266,11 +266,11 @@ struct menuBar *loadFinderMenuBar(void)
 				.numOptions = 6,
 				.options = 
 				{
-					"New",
+					"New File",
 					"Open",
 					"Rename",
-					"Hide",
-					"Info",
+					"(un)Hide",
+					"File Info",
 					"Delete",
 				},
 				.funcPtrs = 
@@ -343,3 +343,4 @@ enum programState aboutWindow(void)
 	}
 	return CANCEL;
 }
+

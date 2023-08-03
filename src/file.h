@@ -13,13 +13,13 @@ extern "C" {
 #define FILE_DETECT_STRING_LEN    5
 
 #define AESTHETIC_FILE_NAME_POS   (FILE_DETECT_STRING_POS + FILE_DETECT_STRING_LEN) // 5
-#define AESTHETIC_FILE_NAME_LEN   16
+#define AESTHETIC_FILE_NAME_LEN   17
 
-#define FILE_DATA_POS             (AESTHETIC_FILE_NAME_POS + AESTHETIC_FILE_NAME_LEN) // 21
+#define FILE_DATA_POS             (AESTHETIC_FILE_NAME_POS + AESTHETIC_FILE_NAME_LEN) // 22
 
 #define FILE_EOF_LEN              1
 
-#define FILE_METADATA_SIZE        (FILE_DETECT_STRING_LEN + AESTHETIC_FILE_NAME_LEN + FILE_EOF_LEN)
+#define FILE_METADATA_SIZE        (FILE_DETECT_STRING_LEN + AESTHETIC_FILE_NAME_LEN + FILE_EOF_LEN) // 23
 
 #define MAX_DATA_SIZE             (3000)
 
@@ -39,8 +39,8 @@ extern "C" {
 
 struct file
 {
-	char name[8];                               // XXX will change to aesthetic name soon so users can have 16 letter names
-	char osName[8];
+	char aestheticName[AESTHETIC_FILE_NAME_LEN];
+	char osName[9];
 	int size;
 	int dataSize;
 };
@@ -56,8 +56,7 @@ void loadFileData(struct file *file);
 uint8_t getNumFiles(void);
 int toggleHiddenStatus(char* name);
 bool isHidden(char* name);
-void archiveAll(void);
-
+void archiveAllFiles(void); // archives all the user's note files (soon it will archive all of SmartNotes' appvars too)
 
 #ifdef __cplusplus
 }

@@ -107,7 +107,7 @@ void generateTestingFiles(void)
 		ti_Write(FILE_DETECT_STRING, sizeof(FILE_DETECT_STRING) - 1, 1, file);
 		
 		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, file);
-		ti_Write(nullBytes, 1, 16, file);
+		ti_Write(nullBytes, 1, AESTHETIC_FILE_NAME_LEN, file);
 		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, file);
 		ti_Write(aestheticNames[i], strlen(aestheticNames[i]), 1, file);
 		
