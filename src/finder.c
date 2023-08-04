@@ -183,7 +183,7 @@ void displayFiles(void)
 		if(i == finder.selectedFile)
 		{
 			gfx_SetColor(finderSelectorColor);
-			chippedRectangle(FINDER_WINDOW_X + FILE_ENTRY_PADDING_LEFT, FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + count * FILE_SPACING, FILE_ENTRY_WIDTH, FILE_SPACING);
+			chippedRectangle(FINDER_WINDOW_X + FILE_ENTRY_PADDING_LEFT, FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + count * FILE_SPACING, FILE_NAME_SECTION_WIDTH, FILE_SPACING);
 			gfx_SetTextFGColor(white);
 		}
 		else
