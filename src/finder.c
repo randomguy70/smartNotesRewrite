@@ -27,6 +27,7 @@ enum programState finderMenu_aboutWindow(void);
 enum programState finderMenu_newFile(void);
 enum programState finderMenu_Open(void);
 enum programState finderMenu_Rename(void);
+enum programState finderMenu_ToggleHiddenStatus(void);
 enum programState finderMenu_Delete(void);
 
 enum programState runFinder(void)
@@ -194,7 +195,6 @@ void displayFiles(void)
 	}
 	
 	gfx_SetTextFGColor(black);
-	
 	for(uint8_t i = finder.fileOffset, count = 0; count < MAX_FILES_ON_SCREEN && i < finder.numFiles; i++, count++)
 	{
 		if(i == finder.selectedFile)
@@ -206,6 +206,11 @@ void displayFiles(void)
 		else
 		{
 			gfx_SetTextFGColor(black);
+		}
+		
+		if(isHidden(finder.files[i].osName))
+		{
+			gfx_SetTextFGColor(finderHiddenFileColor);
 		}
 		gfx_PrintStringXY(finder.files[i].aestheticName, fileEntryX, fileEntryY);
 		fileEntryY += FILE_SPACING;
@@ -295,7 +300,7 @@ struct menuBar *loadFinderMenuBar(void)
 					&finderMenu_newFile,
 					&finderMenu_Open,
 					&finderMenu_Rename,
-					NULL,
+					&finderMenu_ToggleHiddenStatus,
 					NULL,
 					&finderMenu_Delete,
 				}
@@ -319,6 +324,7 @@ struct menuBar *loadFinderMenuBar(void)
 
 /////////////// Finder Menu Functions ///////////////
 // About
+
 enum programState finderMenu_aboutWindow(void)
 {
 	int windowWidth = 150, windowHeight = 80;
@@ -435,6 +441,15 @@ enum programState finderMenu_Rename(void)
 			finder.reloadFiles = true;
 		}
 	}
+	
+	return FINDER;
+}
+
+enum programState finderMenu_ToggleHiddenStatus(void)
+{
+	toggleHiddenStatus(finder.files[finder.selectedFile].osName);
+	finder.reloadFiles = true;
+	while(kb_IsDown(kb_KeyEnter)) kb_Scan();
 	
 	return FINDER;
 }

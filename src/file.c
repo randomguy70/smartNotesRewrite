@@ -91,7 +91,8 @@ uint8_t getNumFiles(void)
 int toggleHiddenStatus(char* name)
 {
 	ti_var_t fileSlot = ti_Open(name, "r");
-	if(!fileSlot || strlen(name) > 8) {
+	if(!fileSlot || strlen(name) > 8)
+	{
 		ti_Close(fileSlot);
 		return -1;
 	}
@@ -138,29 +139,35 @@ void archiveAllFiles(void)
 
 bool createNotesFile(char *aestheticName)
 {
-	uint8_t slot;
+	uint8_t slot, hiddenSlot;
 	char osName[9] = {'\0'};
+	char hiddenOsName[9] = {'\0'};
 	uint8_t nullByte = 0;
-	uint8_t creationAttempts = 0, maxCreationAttempts = 200;
+	uint8_t creationAttempts = 0, maxCreationAttempts = 100;
 	
 	if(strlen(aestheticName) == 0)
 	{
 		return false;
 	}
 	
-	for(int i = 0; i < 8; i++)
+	for(int i = 1; i < 8; i++)
 	{
 		osName[i] = aestheticName[i];
+		hiddenOsName[i] = aestheticName[i];
 	}
+	osName[0] = 65;
+	hiddenOsName[0] = osName[0] ^ 64;
 	
 	while(creationAttempts < maxCreationAttempts)
 	{
-		// check if a file already exists with the same os name
+		// check if a file already exists with the same os name (hidden or not)
 		slot = ti_Open(osName, "r");
+		hiddenSlot = ti_Open(hiddenOsName, "r");
 		ti_Close(slot);
+		ti_Close(hiddenSlot);
 		
 		// if no file exists with the same os name...
-		if(!slot)
+		if(!slot && !hiddenSlot)
 		{
 			slot = ti_Open(osName, "w+");
 			
@@ -181,10 +188,12 @@ bool createNotesFile(char *aestheticName)
 		else
 		{
 			osName[0]++;
+			hiddenOsName[0] = osName[0] ^ 64;
 			creationAttempts++;
 		}
 	}
-	
+	while(kb_AnyKey()) kb_Scan();
+	while(!kb_AnyKey()) kb_Scan();
 	return false;
 }
 
@@ -209,7 +218,7 @@ bool askIfDeleteFile(void)
 		}
 		else if(kb_IsDown(kb_KeyClear))
 		{
-			while(kb_IsDown(kb_KeyClear));
+			while(kb_IsDown(kb_KeyClear)) kb_Scan();;
 			return false;
 		}
 	}

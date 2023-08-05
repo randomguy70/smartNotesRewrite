@@ -15,7 +15,7 @@ enum color
 	black,
 	white,
 	
-	finderWindowHeaderColor,
+	finderWindowHeaderColor = 3,
 	finderWindowBodyColor,
 	finderWindowOutlineColor,
 	finderWindowBackgroundColor,
@@ -31,6 +31,7 @@ enum color
 	menuWindowSelectorColor,
 	menuWindowTextColor,
 	menuWindowSelectedTextColor,
+	finderHiddenFileColor,
 	
 	editorBackgroundColor = 30,
 	editorHeaderBarBackgroundColor,
