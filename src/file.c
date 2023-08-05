@@ -167,6 +167,7 @@ bool createNotesFile(char *aestheticName)
 			ti_Write(&nullByte, 1, AESTHETIC_FILE_NAME_LEN, slot);
 			ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, slot);
 			ti_Write(aestheticName, strlen(aestheticName), 1, slot);
+			ti_Write(&nullByte, 1, 1, slot);
 			ti_Close(slot);
 			
 			return true;
