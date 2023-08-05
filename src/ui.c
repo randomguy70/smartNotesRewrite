@@ -1,6 +1,7 @@
 #include "ui.h"
 #include "colors.h"
 #include "keypress.h"
+#include "system.h"
 
 #include <graphx.h>
 #include <debug.h>
@@ -287,6 +288,8 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 	float time;
 	float cursorBlinkTime = .5, lastCursorChangeTime;
 	bool showCursor = true;
+	uint8_t cursorPos = 0;
+	bool leftPrev = false, rightPrev = false;
 	
 	// wipe the buffer (always pays off to be sure)
 	for(int i = 0; i < maxLength + 1; i++)
@@ -330,9 +333,18 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 			// cursor
 			if(showCursor)
 			{
+				int cursorX = boxX + 4;
+				for(int i = 0; i < cursorPos; i++)
+				{
+					cursorX += gfx_GetCharWidth(buffer[i]);
+				}
+				if(cursorPos > 0)
+				{
+					cursorX--; // makes it appear between letters more cleanly
+				}
 				gfx_SetColor(finderSelectorColor);
-				gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer), boxY + 3, 10);
-				gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer) + 1, boxY + 3, 10);
+				gfx_VertLine_NoClip(cursorX, boxY + 3, 10);
+				gfx_VertLine_NoClip(cursorX + 1, boxY + 3, 10);
 			}
 			
 			gfx_BlitBuffer();
@@ -382,9 +394,10 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 			{
 				buffer[strLen - 1] = '\0';
 				strLen--;
+				cursorPos--;
+				redrawGraphics = true;
+				continue;
 			}
-			redrawGraphics = true;
-			continue;
 		}
 		else if(!kb_IsDown(kb_KeyDel))
 		{
@@ -395,25 +408,33 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 		keyPressed = getSingleCSCKey();
 		if(keyPressed && strLen < maxLength && keyPressed != sk_Del && keyPressed)
 		{
-			character = inputChar(textMode, keyPressed);
+			character = getCharFromKeyPress(textMode, keyPressed);
 			if(character != '\0')
 			{
 				if(strLen == 0 && restrictFirstChar == true)
 				{
 					if((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z') || (character >= '0' && character <= '9'))
 					{
-						buffer[strLen] = character;
+						for(int d = strLen, s = strLen - 1; d >= cursorPos; d--, s--)
+						{
+							buffer[d] = buffer[s];
+						}
+						buffer[cursorPos] = character;
 						strLen++;
-						
+						cursorPos++;
 						showCursor = true;
 						lastCursorChangeTime = time;
 					}
 				}
 				else
 				{
-					buffer[strLen] = character;
+					for(int d = strLen, s = strLen - 1; d >= cursorPos; d--, s--)
+					{
+						buffer[d] = buffer[s];
+					}
+					buffer[cursorPos] = character;
 					strLen++;
-					
+					cursorPos++;
 					showCursor = true;
 					lastCursorChangeTime = time;
 				}
@@ -421,12 +442,45 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 			
 			redrawGraphics = true;
 		}
+		
+		// move cursor
+		if(kb_IsDown(kb_KeyLeft))
+		{
+			if(leftPrev == false && cursorPos > 0)
+			{
+				cursorPos--;
+				showCursor = true;
+				lastCursorChangeTime = time;
+				redrawGraphics = true;
+			}
+			leftPrev = true;
+		}
+		else if(kb_IsDown(kb_KeyRight))
+		{
+			if(rightPrev == false && cursorPos < strLen)
+			{
+				cursorPos++;
+				showCursor = true;
+				lastCursorChangeTime = time;
+				redrawGraphics = true;
+			}
+			rightPrev = true;
+		}
+		
+		if(!kb_IsDown(kb_KeyLeft))
+		{
+			leftPrev = false;
+		}
+		if(!kb_IsDown(kb_KeyRight))
+		{
+			rightPrev = false;
+		}
 	}
 	
 	return 0;
 }
 
-char inputChar(enum textMode mode, uint8_t keyPressed)
+char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed)
 {
 	static const unsigned char numsDat[] =
 	{

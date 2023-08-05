@@ -63,7 +63,7 @@ char *getStrWord(char *str, int *widthBuffer, int *lenBuffer);
 */
 uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth);
 
-char inputChar(enum textMode mode, uint8_t keyPressed);
+char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed);
 
 #ifdef __cplusplus
 }
