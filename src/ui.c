@@ -282,6 +282,7 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 	enum textMode textMode = UPPERCASE;
 	sk_key_t keyPressed;
 	bool redrawGraphics = true;
+	bool deletePrev = false;
 	
 	// wipe the buffer (always pays off to be sure)
 	for(int i = 0; i < maxLength + 1; i++)
@@ -343,19 +344,21 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 		}
 		
 		// delete character
-		if(kb_IsDown(kb_KeyDel))
+		if(kb_IsDown(kb_KeyDel) && !(deletePrev))
 		{
+			deletePrev = true;
+			
 			if(strLen > 0)
 			{
 				buffer[strLen - 1] = '\0';
 				strLen--;
 			}
 			redrawGraphics = true;
-			while(kb_IsDown(kb_KeyDel))
-			{
-				kb_Scan();
-			}
 			continue;
+		}
+		else if(!kb_IsDown(kb_KeyDel))
+		{
+			deletePrev = false;
 		}
 		
 		// input character
