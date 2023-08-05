@@ -1,8 +1,12 @@
 #include "ui.h"
 #include "colors.h"
+#include "keypress.h"
 
 #include <graphx.h>
 #include <debug.h>
+#include <stdbool.h>
+#include <ti/getcsc.h>
+#include <keypadc.h>
 
 void roundedRectangle(int x, int y, int width, int height, int borderRadius)
 {
@@ -269,4 +273,167 @@ char *getStrLine(char *str, int *lenBuffer, int textBoxWidth)
 	
 	(*lenBuffer) = lineLen;
 	return NULL;
+}
+
+uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth)
+{
+	uint8_t strLen = 0;
+	char character = '\0';
+	enum textMode textMode = UPPERCASE;
+	sk_key_t keyPressed;
+	bool redrawGraphics = true;
+	
+	// wipe the buffer (always pays off to be sure)
+	for(int i = 0; i < maxLength + 1; i++)
+	{
+		buffer[i] = '\0';
+	}
+	
+	// make sure nothing is being pressed
+	while(kb_AnyKey())
+	{
+		kb_Scan();
+	}
+	
+	while(true)
+	{
+		// ------- graphics -------
+		if(redrawGraphics)
+		{
+			redrawGraphics = false;
+			gfx_SetDrawBuffer();
+			
+			// blue outline
+			gfx_SetColor(finderSelectorColor);
+			chippedRectangle(boxX, boxY, boxWidth, INPUT_TEXT_BOX_HEIGHT);
+			gfx_Rectangle_NoClip(boxX + 1, boxY + 1, boxWidth - 2, INPUT_TEXT_BOX_HEIGHT - 2);
+			
+			// background box
+			gfx_SetColor(white);
+			gfx_FillRectangle_NoClip(boxX + 2, boxY + 2, boxWidth - 4, INPUT_TEXT_BOX_HEIGHT - 4);
+			
+			// text
+			gfx_SetTextFGColor(black);
+			gfx_PrintStringXY(buffer, boxX + 4, boxY + 5);
+			
+			// cursor
+			gfx_SetColor(finderSelectorColor);
+			gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer), boxY + 3, 10);
+			gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer) + 1, boxY + 3, 10);
+			
+			gfx_BlitBuffer();
+		}
+		
+		// keypresses
+		
+		kb_Scan();
+		
+		// return
+		if (kb_IsDown(kb_KeyEnter) && strLen > 0)
+		{
+			while(kb_IsDown(kb_KeyEnter)) kb_Scan();
+			return 1;
+		}
+		
+		// quit
+		else if (kb_IsDown(kb_KeyClear))
+		{
+			while(kb_IsDown(kb_KeyClear)) kb_Scan();
+			return 0;
+		}
+		
+		// delete character
+		if(kb_IsDown(kb_KeyDel))
+		{
+			if(strLen > 0)
+			{
+				buffer[strLen - 1] = '\0';
+				strLen--;
+			}
+			redrawGraphics = true;
+			while(kb_IsDown(kb_KeyDel))
+			{
+				kb_Scan();
+			}
+			continue;
+		}
+		
+		// input character
+		keyPressed = getSingleCSCKey();
+		if(keyPressed && strLen < maxLength && keyPressed != sk_Del && keyPressed)
+		{
+			character = inputChar(textMode, keyPressed);
+			if(character != '\0')
+			{
+				if(strLen == 0 && restrictFirstChar == true)
+				{
+					if((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z') || (character >= '0' && character <= '9'))
+					{
+						buffer[strLen] = character;
+						strLen++;
+					}
+				}
+				else
+				{
+					buffer[strLen] = character;
+					strLen++;
+				}
+			}
+			
+			redrawGraphics = true;
+		}
+	}
+	
+	return 0;
+}
+
+char inputChar(enum textMode mode, uint8_t keyPressed)
+{
+	static const unsigned char numsDat[] =
+	{
+		0x0, 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 0x0, 
+		0x0, 0x0 , 0x2B, 0x2D, 0x2A, 0x2F, 0x5E, 0x0, 
+		0x0, 0x2D, 0x33, 0x36, 0x39, 0x29, 0x0 , 0x0, 
+		0x0, 0x2E, 0X32, 0x35, 0x38, 0x28, 0x0 , 0x0, 
+		0x0, 0x30, 0x31, 0x34, 0x37, 0x2C, 0x0 , 0x0, 
+		0x0, 0x0 , 0x1a, 0x0 , 0x0 , 0x0 , 0x0 , 0x0, 
+	};
+	static const unsigned char UPPERCASEDat[] =
+	{
+		0x0, 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 
+		0x0, 0x0 , 0x22, 0x57, 0x52, 0x4D, 0x48, 0x0 , 
+		0x0, 0x3F, 0x5B, 0x56, 0x51, 0x4C, 0x47, 0x0 , 
+		0x0, 0x3A, 0X5A, 0x55, 0x50, 0x4B, 0x46, 0x43, 
+		0x0, 0x20, 0x59, 0x54, 0x4F, 0x4A, 0x45, 0x42, 
+		0x0, 0x0 , 0x58, 0x53, 0x4E, 0x49, 0x44, 0x41, 
+	};
+	static const unsigned char lowerCaseDat[] =
+	{
+		0x0, 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 0x0 , 
+		0x0, 0x22, 0x22, 0x77, 0x72, 0x6d, 0x68, 0x0 , 
+		0x0, 0x3f, 0x0 , 0x76, 0x71, 0x6c, 0x67, 0x0 , 
+		0x0, 0x3a, 0X7a, 0x75, 0x70, 0x6b, 0x66, 0x63, 
+		0x0, 0x20, 0x79, 0x74, 0x6f, 0x6a, 0x65, 0x62, 
+		0x0, 0x0 , 0x78, 0x73, 0x6e, 0x69, 0x64, 0x61, 
+	};
+	
+	char character = '\0';
+	
+	if (mode == NUMBERS)
+	{
+		character = numsDat[keyPressed];
+		return character;
+	}
+	if (mode == UPPERCASE)
+	{
+		character = UPPERCASEDat[keyPressed];
+		return character;
+	}
+	if (mode == LOWERCASE)
+	{
+		character = lowerCaseDat[keyPressed];
+		return character;
+	}
+	
+	return character;
 }

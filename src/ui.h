@@ -4,10 +4,21 @@
 #include "colors.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define INPUT_TEXT_BOX_HEIGHT 16
+#define INPUT_TEXT_BOX_CURSOR_HEIGHT 10
+
+enum textMode {NUMBERS, UPPERCASE, LOWERCASE};
+struct inputState
+{
+	enum textMode textMode;
+	bool alphaPrev;
+};
 
 // filled rectangle with rounded corners
 void roundedRectangle(int x, int y, int width, int height, int borderRadius);
@@ -46,6 +57,13 @@ char *getStrLine(char *str, int *lenBuffer, int textBoxWidth);
  * @return a pointer to the next word
  * */ 
 char *getStrWord(char *str, int *widthBuffer, int *lenBuffer);
+
+/* creats a string from input keypresses
+ returns 1 if successful, 0 if not
+*/
+uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth);
+
+char inputChar(enum textMode mode, uint8_t keyPressed);
 
 #ifdef __cplusplus
 }

@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <fileioc.h>
 #include <string.h>
+#include <stdbool.h>
 
 uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
 {
@@ -130,4 +131,53 @@ void archiveAllFiles(void)
 			return;
 		}
 	}
+}
+
+bool createNotesFile(char *aestheticName)
+{
+	uint8_t slot;
+	char osName[9] = {'\0'};
+	uint8_t nullByte = 0;
+	uint8_t creationAttempts = 0, maxCreationAttempts = 200;
+	
+	if(strlen(aestheticName) == 0)
+	{
+		return false;
+	}
+	
+	for(int i = 0; i < 8; i++)
+	{
+		osName[i] = aestheticName[i];
+	}
+	
+	while(creationAttempts < maxCreationAttempts)
+	{
+		// check if a file already exists with the same os name
+		slot = ti_Open(osName, "r");
+		ti_Close(slot);
+		
+		// if no file exists with the same os name...
+		if(!slot)
+		{
+			slot = ti_Open(osName, "w+");
+			
+			ti_Seek(FILE_DETECT_STRING_POS, SEEK_SET, slot);
+			ti_Write(FILE_DETECT_STRING, sizeof(FILE_DETECT_STRING) - 1, 1, slot);
+			ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, slot);
+			ti_Write(&nullByte, 1, AESTHETIC_FILE_NAME_LEN, slot);
+			ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, slot);
+			ti_Write(aestheticName, strlen(aestheticName), 1, slot);
+			ti_Close(slot);
+			
+			return true;
+		}
+		// if a file with the same os name already exists, change the os name a tad
+		else
+		{
+			osName[0]++;
+			creationAttempts++;
+		}
+	}
+	
+	return false;
 }

@@ -12,6 +12,7 @@
 #include <fileioc.h>
 #include <fontlibc.h>
 #include <string.h>
+#include <keypadc.h>
 
 bool init();
 void printSystemText(char *str);

@@ -58,6 +58,7 @@ uint8_t getNumFiles(void);
 int toggleHiddenStatus(char* name);
 bool isHidden(char* name);
 void archiveAllFiles(void); // archives all the user's note files (soon it will archive all of SmartNotes' appvars too)
+bool createNotesFile(char *aestheticName);
 
 #ifdef __cplusplus
 }
