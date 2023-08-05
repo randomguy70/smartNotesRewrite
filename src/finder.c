@@ -27,6 +27,7 @@ enum programState finderMenu_aboutWindow(void);
 enum programState finderMenu_newFile(void);
 enum programState finderMenu_Open(void);
 enum programState finderMenu_Rename(void);
+enum programState finderMenu_Delete(void);
 
 enum programState runFinder(void)
 {
@@ -296,7 +297,7 @@ struct menuBar *loadFinderMenuBar(void)
 					NULL,
 					NULL,
 					NULL,
-					NULL,
+					&finderMenu_Delete,
 				}
 			},
 			{
@@ -415,5 +416,11 @@ enum programState finderMenu_Rename(void)
 		finder.reloadFiles = true;
 	}
 	
+	return FINDER;
+}
+
+enum programState finderMenu_Delete(void)
+{
+	askIfDeleteFile();
 	return FINDER;
 }

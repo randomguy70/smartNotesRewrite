@@ -199,7 +199,7 @@ enum programState runMenuBar(struct menuBar *menuBar, uint8_t activeIndex)
 
 void drawMenu(struct menu *menu, uint8_t activeIndex)
 {
-	const int height = (menu->numOptions >= MAX_MENU_ENTRIES_ON_SCRN) ? (MAX_MENU_HEIGHT) : (MENU_ENTRY_VERT_SPACING * menu->numOptions);
+	const int height = (menu->numOptions >= MAX_MENU_ENTRIES_ON_SCRN) ? (MAX_MENU_HEIGHT) : (MENU_ENTRY_VERT_SPACING * menu->numOptions + 4);
 	int menuX = MENU_BAR_ENTRY_SPACING * activeIndex + ((MENU_BAR_ENTRY_SPACING - MENU_WIDTH) / 2);
 	int menuY = GFX_LCD_HEIGHT - MENU_BAR_HEIGHT - height - 1;
 	
