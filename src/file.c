@@ -3,11 +3,13 @@
 #include "finder.h"
 #include "main.h"
 #include "editor.h"
+#include "ui.h"
 
 #include <stdint.h>
 #include <fileioc.h>
 #include <string.h>
 #include <stdbool.h>
+#include <keypadc.h>
 #include <debug.h>
 
 uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
@@ -180,6 +182,35 @@ bool createNotesFile(char *aestheticName)
 		{
 			osName[0]++;
 			creationAttempts++;
+		}
+	}
+	
+	return false;
+}
+
+bool askIfDeleteFile(void)
+{
+	char bodyString[95] = {"Do you really want to delete \""};
+	strcat(bodyString, finder.files[finder.selectedFile].aestheticName);
+	strcat(bodyString, "\"? Press enter to delete, and clear to cancel.");
+	
+	alert("Warning!", bodyString);
+	
+	while(1)
+	{
+		kb_Scan();
+		if(kb_IsDown(kb_KeyEnter))
+		{
+			ti_Delete(finder.files[finder.selectedFile].osName);
+			finder.reloadFiles = true;
+			
+			while(kb_IsDown(kb_KeyEnter)) kb_Scan();
+			return true;
+		}
+		else if(kb_IsDown(kb_KeyClear))
+		{
+			while(kb_IsDown(kb_KeyClear));
+			return false;
 		}
 	}
 	

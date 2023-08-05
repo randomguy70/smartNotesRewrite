@@ -7,6 +7,7 @@
 #include "menu.h"
 
 #include <graphx.h>
+#include "fileioc.h"
 #include <keypadc.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -73,6 +74,12 @@ enum programState runFinder(void)
 		if(kb_IsDown(kb_KeyEnter))
 		{
 			return EDITOR;
+		}
+		
+		// delete file
+		if(kb_IsDown(kb_KeyDel))
+		{
+			askIfDeleteFile();
 		}
 		
 		dealWithScrollUp();
@@ -178,6 +185,12 @@ void displayFiles(void)
 {
 	int fileEntryX = FINDER_WINDOW_X + FILE_NAME_PADDING_LEFT;
 	int fileEntryY = FINDER_WINDOW_Y + FINDER_WINDOW_HEADER_HEIGHT + (FILE_SPACING - 8) / 2;
+	
+	// make sure the scrollbar position isn't after all the files
+	if(finder.selectedFile >= finder.numFiles)
+	{
+		finder.selectedFile = finder.numFiles - 1;
+	}
 	
 	gfx_SetTextFGColor(black);
 	

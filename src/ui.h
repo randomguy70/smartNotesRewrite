@@ -29,6 +29,9 @@ void outlinedRoundedRectangle(int x, int y, int width, int height, int borderRad
 // rounded window with outline and header
 void window(int x, int y, int width, int height, int borderRadius, enum color headerColor, enum color bodyColor, enum color outlineColor, char *title);
 
+// prints a window with the given title and body text
+void alert(char *title, char *body);
+
 // filled rectangle with each corner pixel missing (approximation of rounded rectangle)
 void chippedRectangle(int x, int y, int width, int height);
 
