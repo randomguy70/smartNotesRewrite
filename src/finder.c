@@ -407,6 +407,7 @@ enum programState finderMenu_Rename(void)
 	int textBoxX = (GFX_LCD_WIDTH / 2 - textBoxWidth / 2);
 	int textBoxY = messageY + 20;
 	
+	
 	gfx_SetDrawBuffer();
 	window(windowX, windowY, windowWidth, windowHeight, 12, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor, "Rename File");
 	gfx_SetTextFGColor(finderWindowOutlineColor); // XXX will make a system window outline into it's own color
