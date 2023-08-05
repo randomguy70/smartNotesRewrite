@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <ti/getcsc.h>
 #include <keypadc.h>
+#include <sys/timers.h>
 
 void roundedRectangle(int x, int y, int width, int height, int borderRadius)
 {
@@ -283,6 +284,9 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 	sk_key_t keyPressed;
 	bool redrawGraphics = true;
 	bool deletePrev = false;
+	float time;
+	float cursorBlinkTime = .5, lastCursorChangeTime;
+	bool showCursor = true;
 	
 	// wipe the buffer (always pays off to be sure)
 	for(int i = 0; i < maxLength + 1; i++)
@@ -295,6 +299,12 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 	{
 		kb_Scan();
 	}
+	
+	// reset, enable, and set timer to count up @ 32768 Hz
+	timer_Set(1, 0);
+	timer_Enable(1, TIMER_32K, TIMER_0INT, TIMER_UP);
+	time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
+	lastCursorChangeTime = time;
 	
 	while(true)
 	{
@@ -318,16 +328,36 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 			gfx_PrintStringXY(buffer, boxX + 4, boxY + 5);
 			
 			// cursor
-			gfx_SetColor(finderSelectorColor);
-			gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer), boxY + 3, 10);
-			gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer) + 1, boxY + 3, 10);
+			if(showCursor)
+			{
+				gfx_SetColor(finderSelectorColor);
+				gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer), boxY + 3, 10);
+				gfx_VertLine_NoClip(boxX + 4 + gfx_GetStringWidth(buffer) + 1, boxY + 3, 10);
+			}
 			
 			gfx_BlitBuffer();
 		}
 		
-		// keypresses
-		
+		// update
 		kb_Scan();
+		time = (float)timer_GetSafe(1, TIMER_UP) / 32768;
+		
+		// show/hide cursor
+		if(time - lastCursorChangeTime >= cursorBlinkTime)
+		{
+			lastCursorChangeTime = time;
+			
+			if(showCursor)
+			{
+				showCursor = false;
+				redrawGraphics = true;
+			}
+			else
+			{
+				showCursor = true;
+				redrawGraphics = true;
+			}
+		}
 		
 		// return
 		if (kb_IsDown(kb_KeyEnter) && strLen > 0)
@@ -374,12 +404,18 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 					{
 						buffer[strLen] = character;
 						strLen++;
+						
+						showCursor = true;
+						lastCursorChangeTime = time;
 					}
 				}
 				else
 				{
 					buffer[strLen] = character;
 					strLen++;
+					
+					showCursor = true;
+					lastCursorChangeTime = time;
 				}
 			}
 			
