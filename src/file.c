@@ -8,6 +8,7 @@
 #include <fileioc.h>
 #include <string.h>
 #include <stdbool.h>
+#include <debug.h>
 
 uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
 {
@@ -57,7 +58,7 @@ void loadFileData(struct file *file)
 	file->dataSize = file->size - FILE_METADATA_SIZE;
 	
 	if(file->dataSize > MAX_FILE_SIZE || file->size < FILE_METADATA_SIZE)
-	{
+	{	
 		programState = QUIT;
 		return;
 	}
@@ -167,6 +168,8 @@ bool createNotesFile(char *aestheticName)
 			ti_Write(&nullByte, 1, AESTHETIC_FILE_NAME_LEN, slot);
 			ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, slot);
 			ti_Write(aestheticName, strlen(aestheticName), 1, slot);
+			ti_Write(&nullByte, 1, 1, slot);
+			ti_Seek(AESTHETIC_FILE_NAME_POS + AESTHETIC_FILE_NAME_LEN, SEEK_SET, slot);
 			ti_Write(&nullByte, 1, 1, slot);
 			ti_Close(slot);
 			

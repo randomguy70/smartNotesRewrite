@@ -13,6 +13,7 @@
 #include <fontlibc.h>
 #include <string.h>
 #include <keypadc.h>
+#include <debug.h>
 
 bool init();
 void printSystemText(char *str);
@@ -41,6 +42,7 @@ int main(void)
 				programState = runFinder();
 				break;
 			case EDITOR:
+				dbg_printf("Running editor\n");
 				programState = runEditor();
 				break;
 			default:

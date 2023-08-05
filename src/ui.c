@@ -277,6 +277,7 @@ char *getStrLine(char *str, int *lenBuffer, int textBoxWidth)
 	return NULL;
 }
 
+// XXX will add timed cursor movement next
 uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth)
 {
 	uint8_t strLen = 0;

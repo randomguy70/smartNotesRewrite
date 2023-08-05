@@ -22,8 +22,10 @@ void dealWithScrollUp(void);
 void dealWithScrollDown(void);
 
 // menu functions
-enum programState aboutWindow(void);
-enum programState newFile(void);
+enum programState finderMenu_aboutWindow(void);
+enum programState finderMenu_newFile(void);
+enum programState finderMenu_Open(void);
+enum programState finderMenu_Rename(void);
 
 enum programState runFinder(void)
 {
@@ -243,7 +245,7 @@ struct menuBar *loadFinderMenuBar(void)
 				.numOptions = 0,
 				.funcPtrs = 
 				{
-					&aboutWindow
+					&finderMenu_aboutWindow
 				}
 			},
 			{
@@ -276,8 +278,8 @@ struct menuBar *loadFinderMenuBar(void)
 				},
 				.funcPtrs = 
 				{
-					&newFile,
-					NULL,
+					&finderMenu_newFile,
+					&finderMenu_Open,
 					NULL,
 					NULL,
 					NULL,
@@ -285,26 +287,13 @@ struct menuBar *loadFinderMenuBar(void)
 				}
 			},
 			{
-				.name = "Edit",
-				.numOptions = 7,
+				.name = "whatami",
+				.numOptions = 0,
 				.options = 
 				{
-					"Search",
-					"Some",
-					"Random",
-					"Thing",
-					"For",
-					"No",
-					"Reason",
 				},
 				.funcPtrs = 
 				{
-					NULL,
-					NULL,
-					NULL,
-					NULL,
-					NULL,
-					NULL,
 					NULL,
 				}
 			}
@@ -316,7 +305,7 @@ struct menuBar *loadFinderMenuBar(void)
 
 /////////////// Finder Menu Functions ///////////////
 // About
-enum programState aboutWindow(void)
+enum programState finderMenu_aboutWindow(void)
 {
 	int windowWidth = 150, windowHeight = 80;
 	int windowX = GFX_LCD_WIDTH / 2 - windowWidth / 2;
@@ -351,7 +340,7 @@ enum programState aboutWindow(void)
 // Settings
 
 // File
-enum programState newFile(void)
+enum programState finderMenu_newFile(void)
 {
 	uint8_t result;
 	
@@ -381,3 +370,37 @@ enum programState newFile(void)
 	return FINDER;
 }
 
+enum programState finderMenu_Open(void)
+{
+	return EDITOR;
+}
+
+enum programState finderMenu_Rename(void)
+{
+	uint8_t result;
+	
+	int windowWidth = 200, windowHeight = 80;
+	int windowX = GFX_LCD_WIDTH / 2 - windowWidth / 2;
+	int windowY = GFX_LCD_HEIGHT / 2 - windowHeight / 2;
+	
+	int textBoxWidth = windowWidth - 50;
+	int textBoxX = (GFX_LCD_WIDTH / 2 - textBoxWidth / 2);
+	int textBoxY = windowY + 12 + 20;
+	
+	gfx_SetDrawBuffer();
+	window(windowX, windowY, windowWidth, windowHeight, 12, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor, "New File");
+	gfx_SetTextFGColor(finderWindowOutlineColor);
+	gfx_PrintStringXY("Input the File's name", (GFX_LCD_WIDTH - gfx_GetStringWidth("Input the File's name")) / 2, windowY + 12 + 4);
+	gfx_BlitBuffer();
+	
+	char aestheticName[AESTHETIC_FILE_NAME_LEN] = {'\0'};
+	result = inputString(aestheticName, AESTHETIC_FILE_NAME_LEN - 1, true, textBoxX, textBoxY, textBoxWidth);
+	
+	if(result == 1)
+	{
+		createNotesFile(aestheticName);
+		finder.reloadFiles = true;
+	}
+	
+	return FINDER;
+}
