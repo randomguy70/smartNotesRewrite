@@ -297,7 +297,7 @@ char *getStrLine(char *str, int *lenBuffer, int textBoxWidth)
 }
 
 // XXX will add timed cursor movement next
-uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth)
+bool inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth)
 {
 	uint8_t strLen = 0;
 	char character = '\0';
@@ -395,14 +395,14 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 		if (kb_IsDown(kb_KeyEnter) && strLen > 0)
 		{
 			while(kb_IsDown(kb_KeyEnter)) kb_Scan();
-			return 1;
+			return true;
 		}
 		
 		// quit
 		else if (kb_IsDown(kb_KeyClear))
 		{
 			while(kb_IsDown(kb_KeyClear)) kb_Scan();
-			return 0;
+			return false;
 		}
 		
 		// delete character
@@ -497,7 +497,7 @@ uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int
 		}
 	}
 	
-	return 0;
+	return false;
 }
 
 char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed)

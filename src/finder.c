@@ -294,7 +294,7 @@ struct menuBar *loadFinderMenuBar(void)
 				{
 					&finderMenu_newFile,
 					&finderMenu_Open,
-					NULL,
+					&finderMenu_Rename,
 					NULL,
 					NULL,
 					&finderMenu_Delete,
@@ -391,29 +391,49 @@ enum programState finderMenu_Open(void)
 
 enum programState finderMenu_Rename(void)
 {
-	uint8_t result;
+	bool result;
 	
 	int windowWidth = 200, windowHeight = 80;
 	int windowX = GFX_LCD_WIDTH / 2 - windowWidth / 2;
 	int windowY = GFX_LCD_HEIGHT / 2 - windowHeight / 2;
 	
-	int textBoxWidth = windowWidth - 50;
+	// grayed out text showing the file's original name
+	char message[25] = "Renaming ";
+	strcat(message, finder.files[finder.selectedFile].aestheticName);
+	int messageX = (GFX_LCD_WIDTH - gfx_GetStringWidth(message)) / 2;
+	int messageY = windowY + 12 + 4;
+	
+	int textBoxWidth = gfx_GetStringWidth("WWWWWWWWWWWWWWWWWW");
 	int textBoxX = (GFX_LCD_WIDTH / 2 - textBoxWidth / 2);
-	int textBoxY = windowY + 12 + 20;
+	int textBoxY = messageY + 20;
 	
 	gfx_SetDrawBuffer();
-	window(windowX, windowY, windowWidth, windowHeight, 12, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor, "New File");
-	gfx_SetTextFGColor(finderWindowOutlineColor);
-	gfx_PrintStringXY("Input the File's name", (GFX_LCD_WIDTH - gfx_GetStringWidth("Input the File's name")) / 2, windowY + 12 + 4);
+	window(windowX, windowY, windowWidth, windowHeight, 12, finderWindowHeaderColor, finderWindowBodyColor, finderWindowOutlineColor, "Rename File");
+	gfx_SetTextFGColor(finderWindowOutlineColor); // XXX will make a system window outline into it's own color
+	gfx_PrintStringXY(message, messageX, messageY);
 	gfx_BlitBuffer();
 	
-	char aestheticName[AESTHETIC_FILE_NAME_LEN] = {'\0'};
-	result = inputString(aestheticName, AESTHETIC_FILE_NAME_LEN - 1, true, textBoxX, textBoxY, textBoxWidth);
+	char newAestheticName[AESTHETIC_FILE_NAME_LEN] = {'\0'};
+	result = inputString(newAestheticName, AESTHETIC_FILE_NAME_LEN - 1, true, textBoxX, textBoxY, textBoxWidth);
 	
-	if(result == 1)
+	if(result == true)
 	{
-		createNotesFile(aestheticName);
-		finder.reloadFiles = true;
+		uint8_t slot = ti_Open(finder.files[finder.selectedFile].osName, "r+");
+		uint8_t nullByte = 0;
+		
+		if(!slot)
+		{
+			return CANCEL;
+		}
+		else
+		{
+			ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, slot);
+			ti_Write(&nullByte, 1, AESTHETIC_FILE_NAME_LEN, slot);
+			ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, slot);
+			ti_Write(newAestheticName, AESTHETIC_FILE_NAME_LEN - 1, 1, slot);
+			ti_Close(slot);
+			finder.reloadFiles = true;
+		}
 	}
 	
 	return FINDER;

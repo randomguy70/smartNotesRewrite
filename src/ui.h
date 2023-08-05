@@ -64,7 +64,7 @@ char *getStrWord(char *str, int *widthBuffer, int *lenBuffer);
 /* creats a string from input keypresses
  returns 1 if successful, 0 if not
 */
-uint8_t inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth);
+bool inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth);
 
 char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed);
 
