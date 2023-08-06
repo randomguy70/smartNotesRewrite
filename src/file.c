@@ -203,25 +203,17 @@ bool askIfDeleteFile(void)
 	strcat(bodyString, finder.files[finder.selectedFile].aestheticName);
 	strcat(bodyString, "\"? Press enter to delete, and clear to cancel.");
 	
-	alert("Warning!", bodyString);
-	
-	while(1)
+	bool delete = alert("Warning!", bodyString);
+	if(delete)
 	{
-		kb_Scan();
-		if(kb_IsDown(kb_KeyEnter))
-		{
-			ti_Delete(finder.files[finder.selectedFile].osName);
-			finder.reloadFiles = true;
-			
-			while(kb_IsDown(kb_KeyEnter)) kb_Scan();
-			return true;
-		}
-		else if(kb_IsDown(kb_KeyClear))
-		{
-			while(kb_IsDown(kb_KeyClear)) kb_Scan();;
-			return false;
-		}
+		ti_Delete(finder.files[finder.selectedFile].osName);
+		finder.reloadFiles = true;
+		
+		while(kb_IsDown(kb_KeyEnter)) kb_Scan();
+		return true;
 	}
-	
-	return false;
+	else
+	{
+		return false;
+	}
 }

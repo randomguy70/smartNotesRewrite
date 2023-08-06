@@ -5,7 +5,6 @@
 #include "gfx/gfx.h"
 #include "finder.h"
 #include "editor.h"
-#include "fonts/fonts.h"
 
 #include <stdbool.h>
 #include <stdint.h>
