@@ -5,6 +5,7 @@
 #include "gfx/gfx.h"
 #include "finder.h"
 #include "editor.h"
+#include "fonts/fonts.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -16,7 +17,6 @@
 #include <debug.h>
 
 bool init();
-void printSystemText(char *str);
 void cleanup();
 void generateTestingFiles(void);
 
@@ -66,27 +66,19 @@ bool init()
 	fontlib_font_t *font_pack;
 	char *font_pack_name = "DRSANS";
 	fontlib_SetTransparency(true);
-	font_pack = fontlib_GetFontByIndex(font_pack_name, 1);
+	font_pack = fontlib_GetFontByIndex(font_pack_name, BOLD_LARGE);
 	if (font_pack)
 	{
 		fontlib_SetFont(font_pack, 0);
 	}
 	else
 	{
-		printSystemText("Font file DRSANS not found.");
+		alert("Warning!", "Error loading font. Check if DRSANS appvar exists.");
+		gfx_End();
 		return false;
 	}
 	
 	return true;
-}
-
-void printSystemText(char *str)
-{
-	gfx_SetDraw(gfx_buffer);
-	gfx_SetTextBGColor(transparent);
-	gfx_SetTextFGColor(black);
-	gfx_FillScreen(white);
-	gfx_PrintStringXY(str, 4, 4);
 }
 
 void cleanup()
@@ -101,6 +93,7 @@ void generateTestingFiles(void)
 	char *aestheticNames[] = {"123456789012345", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen"};
 	char *names[] = {"a", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"};
 	char text[] = "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. 1234567891234567891234567891234567891234567891234567891234567890123456789012345678901 2345678901234567890";
+	text[2] = '\n';
 	char nullBytes[16] = {'\0'};
 	
 	for(int i = 0; i < 14; i++)
