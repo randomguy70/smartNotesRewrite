@@ -16,25 +16,11 @@
 // calculates the character lengths of 10 lines of text
 // and stores the pointers to the lines in the editor struct
 void editor_LoadScreen(char *startOfPage);
-
-void initEditor()
-{
-	editor.menuBar = loadEditorMenuBar();
-	
-	// wipe text buffer (XXX)
-	for (int i = 0; i < MAX_DATA_SIZE + 1; i++)
-	{
-		editor.buffer[i] = 0;
-	}
-	
-	// initialize some buffer metadata
-	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
-	editor.dataSize = 0;
-	editor.file = NULL;
-}
+void wipeEditor();
 
 enum programState runEditor()
 {
+	wipeEditor();
 	editor.file = &finder.files[finder.fileOffset];
 	loadFileData(editor.file);
 	
@@ -97,6 +83,32 @@ void drawEditor()
 	drawEditorBackground();
 	drawEditorText();
 	gfx_Blit(gfx_buffer);
+}
+
+void initEditor()
+{
+	editor.menuBar = loadEditorMenuBar();
+	wipeEditor();
+}
+
+void wipeEditor()
+{
+	// wipe text buffer (XXX)
+	for (int i = 0; i < MAX_DATA_SIZE + 1; i++)
+	{
+		editor.buffer[i] = 0;
+	}
+	
+	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN; i++)
+	{
+		editor.lineLengths[i] = 0;
+		editor.linePointers[i] = NULL;
+	}
+	
+	// initialize some buffer metadata
+	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
+	editor.dataSize = 0;
+	editor.file = NULL;
 }
 
 struct menuBar *loadEditorMenuBar()
