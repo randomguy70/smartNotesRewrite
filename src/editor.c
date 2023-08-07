@@ -21,29 +21,24 @@ void wipeEditor();
 enum programState runEditor()
 {
 	wipeEditor();
+	
 	editor.file = &finder.files[finder.fileOffset];
 	loadFileData(editor.file);
 	
-	if(programState == QUIT)
-	{
-		return QUIT;
-	}
-	
-	// XXX DEBUG
-	drawEditor();
-	gfx_SetDraw(gfx_screen);
-	
 	editor_LoadScreen(editor.cursorRight);
+	drawEditor();
 	
-	for(int i = 0, y = 20; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= 15)
+	while(programState == EDITOR)
 	{
-		fontlib_SetCursorPosition(2, y);
-		fontlib_DrawStringL(editor.linePointers[i], editor.lineLengths[i]);
-		dbg_printf("Line #%d pointer: %p, length: %d\n", i, editor.linePointers[i], editor.lineLengths[i]);
-	}
-	
-	while(!(programState == QUIT))
-	{
+		if(editor.redrawText)
+		{
+			editor.redrawText = false;
+			gfx_SetDrawBuffer();
+			drawEditorBackground();
+			drawEditorText();
+			gfx_BlitBuffer();
+		}
+		
 		kb_Scan();
 		
 		if(kb_IsDown(kb_KeyClear))
@@ -51,9 +46,25 @@ enum programState runEditor()
 			while(kb_IsDown(kb_KeyClear)) kb_Scan();
 			return FINDER;
 		}
+		
+		if(kb_IsDown(kb_KeyDown))
+		{
+			editor_ScrollDown();
+			editor.redrawText = true;
+			while(kb_IsDown(kb_KeyDown)) kb_Scan();
+		}
 	}
 	
-	return FINDER;
+	return programState;
+}
+
+void drawEditor()
+{
+	gfx_SetDrawBuffer();
+	drawEditorBackground();
+	drawMenuBar(editor.menuBar, -1);
+	drawEditorText();
+	gfx_BlitBuffer();
 }
 
 void drawEditorBackground()
@@ -67,30 +78,27 @@ void drawEditorBackground()
 	// body
 	gfx_SetColor(editorBackgroundColor);
 	gfx_FillRectangle_NoClip(EDITOR_BODY_X, EDITOR_BODY_Y, EDITOR_HEADER_BAR_WIDTH, EDITOR_BODY_HEIGHT);
-	
-	// menuBar
-	drawMenuBar(editor.menuBar, -1);
 }
 
 void drawEditorText()
 {
-	
+	fontlib_SetForegroundColor(black);
+	for(int i = 0, y = 20; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= 15)
+	{
+		fontlib_SetCursorPosition(2, y);
+		fontlib_DrawStringL(editor.linePointers[i], editor.lineLengths[i]);
+		dbg_printf("Line #%d pointer: %p, length: %d\n", i, editor.linePointers[i], editor.lineLengths[i]);
+	}
 }
 
-void drawEditor()
-{
-	gfx_SetDrawBuffer();
-	drawEditorBackground();
-	drawEditorText();
-	gfx_Blit(gfx_buffer);
-}
-
+// wipes the editor and loads the menu bar
 void initEditor()
 {
 	editor.menuBar = loadEditorMenuBar();
 	wipeEditor();
 }
 
+// erases every variable in the editor
 void wipeEditor()
 {
 	// wipe text buffer (XXX)
@@ -109,6 +117,9 @@ void wipeEditor()
 	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
 	editor.dataSize = 0;
 	editor.file = NULL;
+	
+	editor.redrawText = false;
+	editor.redrawAll = false;
 }
 
 struct menuBar *loadEditorMenuBar()
@@ -120,6 +131,10 @@ struct menuBar *loadEditorMenuBar()
 			{
 				.name = "Home",
 				.numOptions = 0,
+				.funcPtrs = 
+				{
+					NULL,
+				}
 			},
 			{
 				.name = "Actions",
@@ -129,11 +144,21 @@ struct menuBar *loadEditorMenuBar()
 					"Go To End",
 					"Erase",
 					"Refresh"
+				},
+				.funcPtrs = 
+				{
+					NULL,
+					NULL,
+					NULL,
 				}
 			},
 			{
 				.name = "Settings",
 				.numOptions = 0,
+				.funcPtrs = 
+				{
+					NULL,
+				}
 			},
 			{
 				.name = "Edit",
@@ -145,6 +170,14 @@ struct menuBar *loadEditorMenuBar()
 					"Paste",
 					"Find",
 					"Replace",
+				},
+				.funcPtrs = 
+				{
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
 				}
 			},
 			{
@@ -159,6 +192,16 @@ struct menuBar *loadEditorMenuBar()
 					"Encrypt",
 					"Info",
 					"Delete",
+				},
+				.funcPtrs = 
+				{
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
 				}
 			},
 		}
@@ -320,6 +363,28 @@ char* editor_LoadLine(char *readPos, int *lenBuffer)
 	*lenBuffer = lineLen;
 	
 	return readPos;
+}
+
+bool editor_ScrollDown(void)
+{
+	int newLineLen;
+	char *newLine = editor_LoadLine(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1], &newLineLen);
+	if(newLine)
+	{
+		for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN - 1; i++)
+		{
+			editor.linePointers[i] = editor.linePointers[i + 1];
+			editor.lineLengths[i] = editor.lineLengths[i + 1];
+		}
+		editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
+		editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
+		
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void editor_LoadScreen(char *startOfPage)

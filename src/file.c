@@ -30,14 +30,20 @@ uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
 		strcpy(files[numFiles].osName, osName);
 		// store the aesthetic name (the name the user sees)
 		fileSlot = ti_Open(files[numFiles].osName, "r");
+		if(!fileSlot)
+		{
+			alert("Warning!", "Error loading file. Not going to load any more files.");
+			break;
+		}
 		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, fileSlot);
 		ti_Read(files[numFiles].aestheticName, (AESTHETIC_FILE_NAME_LEN - 1), 1, fileSlot);
 		ti_Close(fileSlot);
 		// don't forget the null byte after the aesthetic name string
 		files[numFiles].aestheticName[AESTHETIC_FILE_NAME_LEN - 1] = '\0';
 		
-		numFiles++;
+		dbg_printf("Loaded file %s\n", files[numFiles].aestheticName);
 		
+		numFiles++;
 	}
 	
 	return numFiles;

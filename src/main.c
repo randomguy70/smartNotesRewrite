@@ -28,7 +28,7 @@ int main(void)
 {
 	if(init() == false) {return 0;}
 	
-	// generateTestingFiles();
+	generateTestingFiles();
 	
 	initFinder();
 	initEditor();
@@ -90,24 +90,28 @@ void cleanup()
 void generateTestingFiles(void)
 {
 	char *aestheticNames[] = {"123456789012345", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen"};
-	char *names[] = {"a", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"};
-	char text[] = "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. 1234567891234567891234567891234567891234567891234567891234567890123456789012345678901 2345678901234567890";
-	text[2] = '\n';
-	char nullBytes[16] = {'\0'};
+	char *names[] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"};
+	char text[] = "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. Thequickbrownfoxjumpsoverthelazydog.Thequickbrown fox jumps over the lazy dog. The quick brownfoxjumpsoverthelazydog. The quick brown fox jumps over  the  lazy  dog.";
+	uint8_t nullBytes[17] = {0};
 	
 	for(int i = 0; i < 14; i++)
 	{
 		uint8_t file = ti_Open(names[i], "w+");
+		if(!file)
+		{
+			ti_Close(file);
+			return;
+		}
 		ti_Seek(FILE_DETECT_STRING_POS, SEEK_SET, file);
-		ti_Write(FILE_DETECT_STRING, sizeof(FILE_DETECT_STRING) - 1, 1, file);
+		ti_Write(FILE_DETECT_STRING, FILE_DETECT_STRING_LEN, 1, file);
 		
 		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, file);
-		ti_Write(nullBytes, 1, AESTHETIC_FILE_NAME_LEN, file);
+		ti_Write(nullBytes, AESTHETIC_FILE_NAME_LEN, 1, file);
 		ti_Seek(AESTHETIC_FILE_NAME_POS, SEEK_SET, file);
 		ti_Write(aestheticNames[i], strlen(aestheticNames[i]), 1, file);
 		
 		ti_Seek(FILE_DATA_POS, SEEK_SET, file);
-		ti_Write(text, sizeof(text)-1, 1, file);
+		ti_Write(text, sizeof(text) - 1, 1, file);
 		ti_Write(nullBytes, 1, 1, file);
 		ti_SetArchiveStatus(true, file);
 		ti_Close(file);

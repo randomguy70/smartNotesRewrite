@@ -37,6 +37,8 @@ extern "C" {
 
 struct editor
 {
+	bool redrawText, redrawAll;
+	
 	struct file *file;
 	struct menuBar *menuBar;
 	
@@ -59,9 +61,8 @@ enum programState runEditor();
 
 // draws the editor background and text (with buffering)
 void drawEditor();
-
 void drawEditorBackground();
-void drawEditorText();
+void drawEditorText(void);
 
 // returns a pointer to the editor menu bar struct
 struct menuBar *loadEditorMenuBar();
@@ -81,6 +82,10 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
  * @return returns a pointer to the next line, or NULL if there are no more lines
 */
 char* editor_LoadLine(char *readPos, int *lenBuffer);
+
+// scrolls down 1 line and updates the editor variables as appropriate
+// returns true if you can scroll down, false if you can't
+bool editor_ScrollDown(void);
 
 #ifdef __cplusplus
 }
