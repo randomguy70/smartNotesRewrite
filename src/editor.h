@@ -22,11 +22,11 @@ extern "C" {
 #define EDITOR_BODY_Y               EDITOR_HEADER_BAR_HEIGHT
 
 #define MAX_LINES_ON_EDITOR_SCREEN  13
-#define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 4) // -4 because the cursor is 2 pixels wide, so you need 2 pixels padding on either side of the screen
+#define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 4) // we want 2 pixels padding on either side of the screen
 
 /* Editor Split Buffer layout
 
-                     File
+            Buffer memory block
 --------------------------------------------
 ||||||||||||||                       |||||||
 --------------------------------------------
@@ -43,10 +43,10 @@ struct editor
 	struct menuBar *menuBar;
 	
 	char buffer[MAX_DATA_SIZE + 1]; // +1 because of the EOF byte
-	char* bufferEnd;
+	char *bufferEnd; // points to the last writable byte in the buffer that can store text
 	unsigned int dataSize;
-	char* cursorLeft, *cursorRight;
-	char* startOfPage; // position of the first character on the screen
+	char *cursorLeft, *cursorRight;
+	char *startOfPage; // position of the first character on the screen
 	
 	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN];
 	int lineLengths[MAX_LINES_ON_EDITOR_SCREEN];
@@ -72,9 +72,10 @@ struct menuBar *loadEditorMenuBar();
  * @param readPos start of word
  * @param lenBuffer pointer to variable to store the character length
  * @param widthBuffer pointer to variable to store the pixel width
+ * @param maxWidth the widest pixel length we'll calculate the word up to
  * @return Returns a pointer to the first byte after the word
  * */
-char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer);
+char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWidth);
 
 /** Calculates the character length of a line
  * @param readPos start of line

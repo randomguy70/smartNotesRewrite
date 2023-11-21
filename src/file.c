@@ -40,9 +40,7 @@ uint8_t loadFiles(struct file files[MAX_FILES_LOADABLE])
 		ti_Close(fileSlot);
 		// don't forget the null byte after the aesthetic name string
 		files[numFiles].aestheticName[AESTHETIC_FILE_NAME_LEN - 1] = '\0';
-		
-		dbg_printf("Loaded file %s\n", files[numFiles].aestheticName);
-		
+				
 		numFiles++;
 	}
 	
@@ -54,6 +52,10 @@ void loadFileData(struct file *file)
 	// check if it exists
 	
 	uint8_t slot = ti_Open(file->osName, "r");
+	dbg_printf("File os name: %s\n", file->osName);
+	dbg_printf("File user name: %s\n", file->aestheticName);
+	dbg_printf("Finder offset: %d\n", finder.selectedFile);
+	
 	if(!slot)
 	{
 		programState = QUIT;
@@ -64,9 +66,10 @@ void loadFileData(struct file *file)
 	
 	file->size = ti_GetSize(slot);
 	file->dataSize = file->size - FILE_METADATA_SIZE;
-	
-	if(file->dataSize > MAX_FILE_SIZE || file->size < FILE_METADATA_SIZE)
-	{	
+		
+	if(file->size > MAX_FILE_SIZE || file->size < FILE_METADATA_SIZE)
+	{
+		dbg_printf("File can't be opened because of its size\n");
 		programState = QUIT;
 		return;
 	}
@@ -78,6 +81,7 @@ void loadFileData(struct file *file)
 	// copy file's data into the end of the editor text buffer
 	ti_Seek(FILE_DATA_POS, SEEK_SET, slot);
 	ti_Read(editor.cursorRight, file->dataSize, 1, slot);
+	
 	ti_Close(slot);
 }
 
