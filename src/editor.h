@@ -67,13 +67,16 @@ void drawEditorText(void);
 // returns a pointer to the editor menu bar struct
 struct menuBar *loadEditorMenuBar();
 
+// loads the lengths of the lines displayed onscreen
+void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine);
+
 /** Calculates the character length and pixel width of a word. It does take into consideration the split buffer method I am using,
  * so I don't have to worry about that with editor_LoadLine.
  * @param readPos start of word
  * @param lenBuffer pointer to variable to store the character length
  * @param widthBuffer pointer to variable to store the pixel width
  * @param maxWidth the widest pixel length we'll calculate the word up to
- * @return Returns a pointer to the first byte after the word
+ * @return Returns a pointer to the first byte AFTER the word, or NULL if there are no more words
  * */
 char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWidth);
 
@@ -83,6 +86,15 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
  * @return returns a pointer to the next line, or NULL if there are no more lines
 */
 char* editor_LoadLine(char *readPos, int *lenBuffer);
+
+// returns the pointer to the start of the next line without word wrapping
+// stores the line's length (in characters) in lenBuffer
+char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth);
+
+// returns the pointer to the next character from the editor buffer,
+// takes into account the split between the left and right sections.
+// returns NULL if there are no more characters
+char *getNextBufferChar(char *prev);
 
 // scrolls down 1 line and updates the editor variables as appropriate
 // returns true if you can scroll down, false if you can't

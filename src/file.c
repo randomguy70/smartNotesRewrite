@@ -52,9 +52,6 @@ void loadFileData(struct file *file)
 	// check if it exists
 	
 	uint8_t slot = ti_Open(file->osName, "r");
-	dbg_printf("File os name: %s\n", file->osName);
-	dbg_printf("File user name: %s\n", file->aestheticName);
-	dbg_printf("Finder offset: %d\n", finder.selectedFile);
 	
 	if(!slot)
 	{

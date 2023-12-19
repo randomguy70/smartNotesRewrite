@@ -13,10 +13,39 @@
 #include <stdbool.h>
 #include <debug.h>
 
-// calculates the character lengths of 10 lines of text
-// and stores the pointers to the lines in the editor struct
-void editor_LoadScreen(char *startOfPage);
+// does what it says
 void wipeEditor();
+
+// erases every variable in the editor
+void wipeEditor()
+{
+	// wipe text buffer (XXX)
+	for (int i = 0; i < MAX_DATA_SIZE + 1; i++)
+	{
+		editor.buffer[i] = 0;
+	}
+	
+	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN; i++)
+	{
+		editor.lineLengths[i] = 0;
+		editor.linePointers[i] = NULL;
+	}
+	
+	// initialize some buffer metadata
+	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
+	editor.dataSize = 0;
+	editor.file = NULL;
+	
+	editor.redrawText = false;
+	editor.redrawAll = false;
+}
+
+// wipes the editor and loads the menu bar
+void initEditor()
+{
+	editor.menuBar = loadEditorMenuBar();
+	wipeEditor();
+}
 
 enum programState runEditor()
 {
@@ -25,7 +54,8 @@ enum programState runEditor()
 	editor.file = &finder.files[finder.selectedFile];
 	loadFileData(editor.file);
 	
-	editor_LoadScreen(editor.cursorRight);
+	editor_LoadUnwrappedScreen(editor.cursorRight, 0);
+	
 	drawEditor();
 	
 	while(programState == EDITOR)
@@ -87,41 +117,7 @@ void drawEditorText()
 	{
 		fontlib_SetCursorPosition(2, y);
 		fontlib_DrawStringL(editor.linePointers[i], editor.lineLengths[i]);
-		// dbg_printf("Line #%d pointer: %p, length: %d\n", i, editor.linePointers[i], editor.lineLengths[i]);
 	}
-	
-	// dbg_printf("End of the buffer: %p", editor.bufferEnd);
-}
-
-// wipes the editor and loads the menu bar
-void initEditor()
-{
-	editor.menuBar = loadEditorMenuBar();
-	wipeEditor();
-}
-
-// erases every variable in the editor
-void wipeEditor()
-{
-	// wipe text buffer (XXX)
-	for (int i = 0; i < MAX_DATA_SIZE + 1; i++)
-	{
-		editor.buffer[i] = 0;
-	}
-	
-	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN; i++)
-	{
-		editor.lineLengths[i] = 0;
-		editor.linePointers[i] = NULL;
-	}
-	
-	// initialize some buffer metadata
-	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
-	editor.dataSize = 0;
-	editor.file = NULL;
-	
-	editor.redrawText = false;
-	editor.redrawAll = false;
 }
 
 struct menuBar *loadEditorMenuBar()
@@ -219,16 +215,13 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 	int len = 0, width = 0;
 	
 	// see editor.h line 27 for the buffer layout
-	if((readPos >= editor.buffer && readPos < editor.cursorLeft) || (readPos >= editor.cursorRight && readPos <= editor.bufferEnd))
+	//  || (readPos >= editor.cursorRight && readPos <= editor.bufferEnd))
+	// first, we read words from the left of the cursor
+	if(readPos >= editor.buffer && readPos < editor.cursorLeft)
 	{
-		if(readPos < editor.cursorLeft)
-		{
-			leftOfCursor = true;
-		}
-		
 		// when we hit a Null Byte or New Line Code, return a pointer to it
 		// treat spaces as individual words
-		while(*readPos != '\0' && *readPos != '\n' && readPos <= editor.bufferEnd)
+		while(*readPos != '\0' && *readPos !='\n' && readPos < editor.cursorLeft)
 		{
 			if(*readPos == ' ')
 			{
@@ -247,9 +240,9 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 			len++;
 			
 			// once a word gets too long, go back a character and return
-			if(width > maxWidth && len > 0)
+			if(width > maxWidth && len > 1)
 			{
-				readPos = prevReadPos;
+				// readPos = prevReadPos;
 				width -= fontlib_GetGlyphWidth(*readPos);
 				len--;
 				break;
@@ -257,6 +250,7 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 			
 			if(leftOfCursor && readPos >= editor.cursorLeft)
 			{
+				dbg_printf("switching from left to right side of buffer\n");
 				leftOfCursor = false;
 				readPos = editor.cursorRight;
 			}
@@ -280,6 +274,7 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 		readPos = editor.cursorRight;
 	}
 	
+	dbg_printf("loaded word. Len: %d, width: %d, ascii: %s\n", *lenBuffer, *widthBuffer, readPos - *lenBuffer);
 	return readPos;
 }
 
@@ -335,6 +330,7 @@ char* editor_LoadLine(char *readPos, int *lenBuffer)
 			if(readPos >= editor.bufferEnd)
 			{
 				*lenBuffer = lineLen;
+				dbg_printf("Finished reading out buffer\n");
 				return NULL;
 			}
 			
@@ -344,6 +340,7 @@ char* editor_LoadLine(char *readPos, int *lenBuffer)
 			// 	lineLen = wordLen;
 			// 	break;
 			// }
+			
 		}
 		
 		// XXX perhaps will add a statement for if a word is really long...but for now loadWord cuts words off at the width of the screen
@@ -361,6 +358,54 @@ char* editor_LoadLine(char *readPos, int *lenBuffer)
 	*lenBuffer = lineLen;
 	
 	return readPos;
+}
+
+char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
+{
+	*lenBuffer = 0;
+	int width = 0;
+	while(1)
+	{
+		dbg_printf("Current Char: %c\n", *readPos);
+		// if we hit a newline code, return the next character after the code
+		if(*readPos == '\n')
+		{
+			return getNextBufferChar(readPos);
+		}
+		if((readPos == NULL) || (*readPos == '\0'))
+		{
+			return NULL;
+		}
+		
+		// if the character fits on the line, add it
+		if(width + fontlib_GetGlyphWidth(*readPos) <= maxWidth)
+		{
+			width += fontlib_GetGlyphWidth(*readPos);
+			(*lenBuffer)++;
+			readPos = getNextBufferChar(readPos);
+		}
+		// if the character doesn't fit on the line, it is the start of the next line
+		else
+		{
+			return readPos;
+		}
+	}
+}
+
+char *getNextBufferChar(char *prev)
+{
+	char *new = ++prev;
+	if(new >= editor.bufferEnd)
+	{
+		return NULL;
+	}
+	else if((new >= editor.cursorLeft) && (new < editor.cursorRight))
+	{
+		{
+			new = editor.cursorRight;
+		}
+	}
+	return new;
 }
 
 bool editor_ScrollDown(void)
@@ -387,28 +432,17 @@ bool editor_ScrollDown(void)
 	}
 }
 
-void editor_LoadScreen(char *startOfPage)
+// XXX change it to only load lines starting from the starting line
+void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 {
-	int lineNum = 0, lineLen = 0;
-	char *linePtr = startOfPage;
+	char *curLinePtr = startingPtr;
+	int length;
 	
-	// we already know where the first line starts...
-	editor.linePointers[0] = startOfPage;
-	linePtr = editor_LoadLine(startOfPage, &lineLen);
-	editor.lineLengths[0] = lineLen;
-	
-	lineNum++;
-	
-	while(lineNum < MAX_LINES_ON_EDITOR_SCREEN)
+	for(int i = startingLine; (i < MAX_LINES_ON_EDITOR_SCREEN) && (curLinePtr != NULL); i++)
 	{
-		editor.linePointers[lineNum] = linePtr;
-		linePtr = editor_LoadLine(linePtr, &lineLen);
-		if(linePtr == NULL)
-		{
-			return;
-		}
-		editor.lineLengths[lineNum] = lineLen;
-		
-		lineNum++;		
+		editor.linePointers[i] = curLinePtr;
+		curLinePtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, EDITOR_BODY_WIDTH);
+		editor.lineLengths[i] = length;
+		dbg_printf("loaded line #%d, length: %d, content: %s\n", i, editor.lineLengths[i], editor.linePointers[i]);
 	}
 }
