@@ -96,6 +96,8 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth);
 // returns NULL if there are no more characters
 char *getNextBufferChar(char *prev);
 
+void drawLine(char *start, int len);
+
 // scrolls down 1 line
 // only used if settings specify word wrapping
 // returns true if you can scroll down, false if you can't

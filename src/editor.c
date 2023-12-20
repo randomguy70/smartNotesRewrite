@@ -116,7 +116,7 @@ void drawEditorText()
 	for(int i = 0, y = 20; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= 15)
 	{
 		fontlib_SetCursorPosition(2, y);
-		fontlib_DrawStringL(editor.linePointers[i], editor.lineLengths[i]);
+		drawLine(editor.linePointers[i], editor.lineLengths[i]);
 	}
 }
 
@@ -407,6 +407,15 @@ char *getNextBufferChar(char *prev)
 	return new;
 }
 
+void drawLine(char *start, int len)
+{
+	for(int i = 0; i < len; i++)
+	{
+		fontlib_DrawGlyph(*start);
+		start = getNextBufferChar(start);
+	}
+}
+
 bool editor_ScrollDown(void)
 {
 	int newLineLen;
@@ -420,7 +429,7 @@ bool editor_ScrollDown(void)
 		}
 		editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
 		editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
-				
+		
 		return true;
 	}
 	else
@@ -442,7 +451,29 @@ bool editor_ScrollDownUnwrapped(void)
 		editor.linePointers[i] = editor.linePointers[i + 1];
 		editor.lineLengths[i] = editor.lineLengths[i + 1];
 	}
-	newLine = editor_LoadUnwrappedLine(editor.linePointers[(MAX_LINES_ON_EDITOR_SCREEN - 1)], &newLineLen, MAX_LINE_PIXEL_WIDTH);
+	
+	// XXX refactor later (one if else statement)
+	// make the pointer to the new line at the bottom of the screen equal to the previous line plus the previous line's length
+	// BUT, take into account the buffer gap
+	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] < editor.cursorLeft)
+	{
+		// in the case that the cursor is on the bottom line, we jump over the buffer gap
+		if(editor.cursorLeft - editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] < editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2])
+		{
+			newLine = editor.cursorRight + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2] - (editor.cursorLeft - editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2]);
+		}
+		else
+		{
+			newLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2];
+		}
+	}
+	else
+	{
+		newLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2];
+	}
+	
+	editor_LoadUnwrappedLine(newLine, &newLineLen, MAX_LINE_PIXEL_WIDTH);
+	
 	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
 	editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
 	return true;
@@ -457,7 +488,8 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 	for(int i = startingLine; (i < MAX_LINES_ON_EDITOR_SCREEN) && (curLinePtr != NULL); i++)
 	{
 		editor.linePointers[i] = curLinePtr;
-		curLinePtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, EDITOR_BODY_WIDTH);
+		curLinePtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, MAX_LINE_PIXEL_WIDTH);
 		editor.lineLengths[i] = length;
 	}
 }
+
