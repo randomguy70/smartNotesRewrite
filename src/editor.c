@@ -79,9 +79,9 @@ enum programState runEditor()
 		
 		if(kb_IsDown(kb_KeyDown))
 		{
-			editor_ScrollDown();
+			editor_ScrollDownUnwrapped();
 			editor.redrawText = true;
-			while(kb_IsDown(kb_KeyDown)) kb_Scan();
+			// while(kb_IsDown(kb_KeyDown)) kb_Scan();
 		}
 	}
 	
@@ -366,7 +366,6 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
 	int width = 0;
 	while(1)
 	{
-		dbg_printf("Current Char: %c\n", *readPos);
 		// if we hit a newline code, return the next character after the code
 		if(*readPos == '\n')
 		{
@@ -421,15 +420,32 @@ bool editor_ScrollDown(void)
 		}
 		editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
 		editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
-		
-		dbg_printf("New line on screen. Ptr: %p, Len: %d\n", newLine, newLineLen);
-		
+				
 		return true;
 	}
 	else
 	{
 		return false;
 	}
+}
+
+bool editor_ScrollDownUnwrapped(void)
+{
+	int newLineLen;
+	char *newLine;
+	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] == NULL)
+	{
+		return false;
+	}
+	for(int i = 0; i < (MAX_LINES_ON_EDITOR_SCREEN - 1); i++)
+	{
+		editor.linePointers[i] = editor.linePointers[i + 1];
+		editor.lineLengths[i] = editor.lineLengths[i + 1];
+	}
+	newLine = editor_LoadUnwrappedLine(editor.linePointers[(MAX_LINES_ON_EDITOR_SCREEN - 1)], &newLineLen, MAX_LINE_PIXEL_WIDTH);
+	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
+	editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
+	return true;
 }
 
 // XXX change it to only load lines starting from the starting line
@@ -443,6 +459,5 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 		editor.linePointers[i] = curLinePtr;
 		curLinePtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, EDITOR_BODY_WIDTH);
 		editor.lineLengths[i] = length;
-		dbg_printf("loaded line #%d, length: %d, content: %s\n", i, editor.lineLengths[i], editor.linePointers[i]);
 	}
 }
