@@ -442,7 +442,15 @@ bool editor_ScrollDownUnwrapped(void)
 {
 	int newLineLen;
 	char *newLine;
+	
+	// if all the text in the file doesn't add up to a full screen, then we obviously can't scroll down
 	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] == NULL)
+	{
+		return false;
+	}
+	
+	// if we're on the last line, we can't scroll down any more
+	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] >= editor.bufferEnd)
 	{
 		return false;
 	}
@@ -487,7 +495,6 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 	char *curLinePtr = startingPtr;
 	int length;
 	
-	dbg_printf("Last character in buffer: %c\n", *(editor.bufferEnd - 1));
 	for(int i = startingLine; ((i < MAX_LINES_ON_EDITOR_SCREEN) && (curLinePtr != NULL)); i++)
 	{
 		editor.linePointers[i] = curLinePtr;
