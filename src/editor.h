@@ -48,6 +48,8 @@ struct editor
 	char *cursorLeft, *cursorRight;
 	char *startOfPage; // position of the first character on the screen
 	
+	// used when user has to scroll up to keep the beginnings of the lines consistent
+	char *lineBeforeScreen;
 	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN];
 	int lineLengths[MAX_LINES_ON_EDITOR_SCREEN];
 };

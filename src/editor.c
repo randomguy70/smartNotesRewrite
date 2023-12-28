@@ -44,7 +44,6 @@ void wipeEditor()
 void initEditor()
 {
 	editor.menuBar = loadEditorMenuBar();
-	wipeEditor();
 }
 
 enum programState runEditor()
@@ -54,6 +53,7 @@ enum programState runEditor()
 	editor.file = &finder.files[finder.selectedFile];
 	loadFileData(editor.file);
 	
+	editor.lineBeforeScreen = editor.cursorRight;
 	editor_LoadUnwrappedScreen(editor.cursorRight, 0);
 	
 	drawEditor();
@@ -364,47 +364,47 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
 {
 	*lenBuffer = 0;
 	int width = 0;
-	while(1)
+	
+	while((readPos != NULL) && (readPos < editor.bufferEnd))
 	{
 		// if we hit a newline code, return the next character after the code
 		if(*readPos == '\n')
 		{
 			return getNextBufferChar(readPos);
 		}
-		if((readPos == NULL) || (*readPos == '\0'))
-		{
-			return NULL;
-		}
 		
 		// if the character fits on the line, add it
-		if(width + fontlib_GetGlyphWidth(*readPos) <= maxWidth)
+		else if(width + fontlib_GetGlyphWidth(*readPos) <= maxWidth)
 		{
 			width += fontlib_GetGlyphWidth(*readPos);
 			(*lenBuffer)++;
 			readPos = getNextBufferChar(readPos);
 		}
-		// if the character doesn't fit on the line, it is the start of the next line
+		// if the character doesn't fit on the line, return it as the start of the next line
 		else
 		{
 			return readPos;
 		}
 	}
+	
+	dbg_printf("Read to end of file. Last character was: %c\n", *(readPos - 1));
+	return NULL;
 }
 
 char *getNextBufferChar(char *prev)
 {
-	char *new = ++prev;
-	if(new >= editor.bufferEnd)
+	prev++;
+	if(prev >= editor.bufferEnd)
 	{
 		return NULL;
 	}
-	else if((new >= editor.cursorLeft) && (new < editor.cursorRight))
+	if((prev >= editor.cursorLeft) && (prev < editor.cursorRight))
 	{
 		{
-			new = editor.cursorRight;
+			return editor.cursorRight;
 		}
 	}
-	return new;
+	return prev;
 }
 
 void drawLine(char *start, int len)
@@ -446,6 +446,8 @@ bool editor_ScrollDownUnwrapped(void)
 	{
 		return false;
 	}
+	
+	editor.lineBeforeScreen = editor.linePointers[0];
 	for(int i = 0; i < (MAX_LINES_ON_EDITOR_SCREEN - 1); i++)
 	{
 		editor.linePointers[i] = editor.linePointers[i + 1];
@@ -485,7 +487,8 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 	char *curLinePtr = startingPtr;
 	int length;
 	
-	for(int i = startingLine; (i < MAX_LINES_ON_EDITOR_SCREEN) && (curLinePtr != NULL); i++)
+	dbg_printf("Last character in buffer: %c\n", *(editor.bufferEnd - 1));
+	for(int i = startingLine; ((i < MAX_LINES_ON_EDITOR_SCREEN) && (curLinePtr != NULL)); i++)
 	{
 		editor.linePointers[i] = curLinePtr;
 		curLinePtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, MAX_LINE_PIXEL_WIDTH);
