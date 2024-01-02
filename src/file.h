@@ -26,6 +26,7 @@ extern "C" {
 #define MAX_FILE_SIZE             (FILE_DETECT_STRING_LEN + AESTHETIC_FILE_NAME_LEN + MAX_DATA_SIZE + 1)
 #define MAX_FILES_LOADABLE        30
 #define MAX_FILES_ON_SCREEN       9
+#define MAX_FILE_LINES            250
 
 /*
 ----------------- FILE LAYOUT ----------------

@@ -43,15 +43,14 @@ struct editor
 	struct menuBar *menuBar;
 	
 	char buffer[MAX_DATA_SIZE + 1]; // +1 because of the EOF byte
-	char *bufferEnd; // points to the last writable byte in the buffer that can store text
+	char *bufferEnd; // pointer to the last byte in the buffer, which is set to '\0'
 	unsigned int dataSize;
 	char *cursorLeft, *cursorRight;
 	char *startOfPage; // position of the first character on the screen
-	
-	// used when user has to scroll up to keep the beginnings of the lines consistent
-	char *lineBeforeScreen;
-	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN];
-	int lineLengths[MAX_LINES_ON_EDITOR_SCREEN];
+	char *lineBeforeScreen; // used to keep the beginnings of the lines consistent when scrolling up
+	int lineOffset; // number of lines above the screen
+	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN]; // pointers to lines of text displayed onscreen
+	int lineLengths[MAX_FILE_LINES];
 };
 extern struct editor editor;
 
@@ -97,6 +96,8 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth);
 // takes into account the split between the left and right sections.
 // returns NULL if there are no more characters
 char *getNextBufferChar(char *prev);
+
+char *getPrevBufferChar(char *cur);
 
 void drawLine(char *start, int len);
 

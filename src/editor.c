@@ -391,28 +391,93 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
 	return NULL;
 }
 
-char *getNextBufferChar(char *prev)
+// The quick brown fox
+// jumps over the lazy dog
+
+char *editor_LoadUnwrappedLineBackward(char *readPos, int *lenBuffer, int maxWidth)
 {
-	prev++;
-	if(prev >= editor.bufferEnd)
+	*lenBuffer = 0;
+	int width = 0;
+	
+	while(readPos != NULL)
+	{
+		if(readPos < editor.buffer)
+		{
+			// go forward in the buffer one character if we went too far backward
+			return getNextBufferChar(readPos);
+		}
+		
+		// if we hit a newline code, return the next character after the code
+		if(*readPos == '\n')
+		{
+			// if there are two newline codes in a row, by logical necessity the line we are reverse-calculating 
+			// must have nothing in it except a newline code
+			if(*(getPrevBufferChar(readPos)) == '\n')
+			{
+				*lenBuffer = 0;
+				return readPos;
+			}
+			
+			// if there was only one newline code, then 
+			
+		}
+		
+		// if the character fits on the line, add it
+		else if(width + fontlib_GetGlyphWidth(*readPos) <= maxWidth)
+		{
+			width += fontlib_GetGlyphWidth(*readPos);
+			(*lenBuffer)++;
+			readPos = getNextBufferChar(readPos);
+		}
+		// if the character doesn't fit on the line, return it as the start of the next line
+		else
+		{
+			return readPos;
+		}
+	}
+	
+	dbg_printf("Read to beginning of file. Last character was: %c\n", *(readPos - 1));
+	return NULL;
+}
+
+char *getNextBufferChar(char *cur)
+{
+	cur++;
+	if(cur >= editor.bufferEnd)
 	{
 		return NULL;
 	}
-	if((prev >= editor.cursorLeft) && (prev < editor.cursorRight))
+	if((cur >= editor.cursorLeft) && (cur < editor.cursorRight))
 	{
 		{
 			return editor.cursorRight;
 		}
 	}
-	return prev;
+	return cur;
+}
+
+char *getPrevBufferChar(char *cur)
+{
+	cur--;
+	if(cur < editor.buffer)
+	{
+		return NULL;
+	}
+	if((cur >= editor.cursorLeft) && (cur < editor.cursorRight))
+	{
+		return editor.cursorLeft;
+	}
+	return cur;
 }
 
 void drawLine(char *start, int len)
 {
-	for(int i = 0; i < len; i++)
+	int i = 0;
+	while((i < len) && (*start != '\n'))
 	{
 		fontlib_DrawGlyph(*start);
 		start = getNextBufferChar(start);
+		i++;
 	}
 }
 
@@ -489,17 +554,20 @@ bool editor_ScrollDownUnwrapped(void)
 	return true;
 }
 
-// XXX change it to only load lines starting from the starting line
 void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 {
-	char *curLinePtr = startingPtr;
 	int length;
 	
-	for(int i = startingLine; ((i < MAX_LINES_ON_EDITOR_SCREEN) && (curLinePtr != NULL)); i++)
+	for(int i = 0, lineIndex = editor.lineOffset; (i < MAX_LINES_ON_EDITOR_SCREEN); i++, lineIndex++)
 	{
-		editor.linePointers[i] = curLinePtr;
-		curLinePtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, MAX_LINE_PIXEL_WIDTH);
-		editor.lineLengths[i] = length;
+		if(startingPtr == NULL)
+		{
+			editor.linePointers[i] = NULL;
+			editor.lineLengths[lineIndex] = 0;
+		}
+		editor.linePointers[i] = startingPtr;
+		startingPtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, MAX_LINE_PIXEL_WIDTH);
+		editor.lineLengths[lineIndex] = length;
 	}
 }
 
