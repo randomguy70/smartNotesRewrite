@@ -8,13 +8,8 @@ DESCRIPTION ?= "A User-friendly text editor, v1.0"
 COMPRESSED ?= YES
 ARCHIVED ?= YES
 
-CFLAGS ?= -Wall -Wextra -O1
-# ----------------------------
+CFLAGS = -Wall -Wextra -Oz
+CXXFLAGS = -Wall -Wextra -Oz
 
-ifndef CEDEV
-$(error CEDEV environment path variable is not set)
-endif
-
-include $(CEDEV)/meta/makefile.mk
-
+include $(shell cedev-config --makefile)
 #------------------------------
