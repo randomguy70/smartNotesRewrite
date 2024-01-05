@@ -27,7 +27,6 @@ void wipeEditor()
 	
 	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN; i++)
 	{
-		editor.lineLengths[i] = 0;
 		editor.linePointers[i] = NULL;
 	}
 	
@@ -35,9 +34,11 @@ void wipeEditor()
 	editor.bufferEnd = editor.buffer + MAX_DATA_SIZE - 1;
 	editor.dataSize = 0;
 	editor.file = NULL;
-	
+	editor.lineOffset = 0;
 	editor.redrawText = false;
 	editor.redrawAll = false;
+	editor.cursorLeft = NULL;
+	editor.cursorRight = NULL;
 }
 
 // wipes the editor and loads the menu bar
@@ -53,7 +54,6 @@ enum programState runEditor()
 	editor.file = &finder.files[finder.selectedFile];
 	loadFileData(editor.file);
 	
-	editor.lineBeforeScreen = editor.cursorRight;
 	editor_LoadUnwrappedScreen(editor.cursorRight, 0);
 	
 	drawEditor();
@@ -116,7 +116,7 @@ void drawEditorText()
 	for(int i = 0, y = 20; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= 15)
 	{
 		fontlib_SetCursorPosition(2, y);
-		drawLine(editor.linePointers[i], editor.lineLengths[i]);
+		drawLine(editor.linePointers[i], editor.lineLengths[editor.lineOffset + i]);
 	}
 }
 
@@ -391,55 +391,6 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
 	return NULL;
 }
 
-// The quick brown fox
-// jumps over the lazy dog
-
-char *editor_LoadUnwrappedLineBackward(char *readPos, int *lenBuffer, int maxWidth)
-{
-	*lenBuffer = 0;
-	int width = 0;
-	
-	while(readPos != NULL)
-	{
-		if(readPos < editor.buffer)
-		{
-			// go forward in the buffer one character if we went too far backward
-			return getNextBufferChar(readPos);
-		}
-		
-		// if we hit a newline code, return the next character after the code
-		if(*readPos == '\n')
-		{
-			// if there are two newline codes in a row, by logical necessity the line we are reverse-calculating 
-			// must have nothing in it except a newline code
-			if(*(getPrevBufferChar(readPos)) == '\n')
-			{
-				*lenBuffer = 0;
-				return readPos;
-			}
-			
-			// if there was only one newline code, then 
-			
-		}
-		
-		// if the character fits on the line, add it
-		else if(width + fontlib_GetGlyphWidth(*readPos) <= maxWidth)
-		{
-			width += fontlib_GetGlyphWidth(*readPos);
-			(*lenBuffer)++;
-			readPos = getNextBufferChar(readPos);
-		}
-		// if the character doesn't fit on the line, return it as the start of the next line
-		else
-		{
-			return readPos;
-		}
-	}
-	
-	dbg_printf("Read to beginning of file. Last character was: %c\n", *(readPos - 1));
-	return NULL;
-}
-
 char *getNextBufferChar(char *cur)
 {
 	cur++;
@@ -483,26 +434,38 @@ void drawLine(char *start, int len)
 
 bool editor_ScrollDown(void)
 {
+	char *lastLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN -1];
+	int lastLineLen = editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1];
+	char *newLine = lastLine + lastLineLen;
 	int newLineLen;
-	char *newLine = editor_LoadLine(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1], &newLineLen);
-	if(newLine != NULL)
-	{
-		for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN - 1; i++)
-		{
-			editor.linePointers[i] = editor.linePointers[i + 1];
-			editor.lineLengths[i] = editor.lineLengths[i + 1];
-		}
-		editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
-		editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
-		
-		return true;
-	}
-	else
+	
+	// if there aren't any more lines to load
+	if((lastLine == NULL) || (newLine >= editor.bufferEnd))
 	{
 		return false;
 	}
+	
+	// since we can load another line, shift all the onscreen line pointers up one
+	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN - 1; i++)
+	{
+		editor.linePointers[i] = editor.linePointers[i + 1];
+		editor.lineLengths[i] = editor.lineLengths[i + 1];
+	}
+	
+	// increment the line offset
+	editor.lineOffset++;
+	
+	// set the pointer of the new line and load its length
+	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
+	// XXX change to load wrapped line
+	editor_LoadUnwrappedLine(newLine, &newLineLen, MAX_LINE_PIXEL_WIDTH);
+	editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
+	
+	// success!
+	return true;
 }
 
+/*
 bool editor_ScrollDownUnwrapped(void)
 {
 	int newLineLen;
@@ -520,7 +483,6 @@ bool editor_ScrollDownUnwrapped(void)
 		return false;
 	}
 	
-	editor.lineBeforeScreen = editor.linePointers[0];
 	for(int i = 0; i < (MAX_LINES_ON_EDITOR_SCREEN - 1); i++)
 	{
 		editor.linePointers[i] = editor.linePointers[i + 1];
@@ -551,6 +513,39 @@ bool editor_ScrollDownUnwrapped(void)
 	
 	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
 	editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
+	return true;
+}
+*/
+
+bool editor_ScrollDownUnwrapped(void)
+{
+	char *lastLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN -1];
+	int lastLineLen = editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1];
+	char *newLine = lastLine + lastLineLen;
+	int newLineLen;
+	
+	// if there aren't any more lines to load
+	if((lastLine == NULL) || (newLine >= editor.bufferEnd))
+	{
+		return false;
+	}
+	
+	// since we can load another line, shift all the onscreen line pointers up one
+	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN - 1; i++)
+	{
+		editor.linePointers[i] = editor.linePointers[i + 1];
+		editor.lineLengths[i] = editor.lineLengths[i + 1];
+	}
+	
+	// increment the line offset
+	editor.lineOffset++;
+	
+	// set the pointer of the new line and load its length
+	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
+	editor_LoadUnwrappedLine(newLine, &newLineLen, MAX_LINE_PIXEL_WIDTH);
+	editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
+	
+	// success!
 	return true;
 }
 

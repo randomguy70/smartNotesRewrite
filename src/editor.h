@@ -24,7 +24,7 @@ extern "C" {
 #define MAX_LINES_ON_EDITOR_SCREEN  13
 #define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 4) // we want 2 pixels padding on either side of the screen
 
-/* Editor Split Buffer layout
+/* Editor Split Buffer layout for instant insertion/deletion
 
             Buffer memory block
 --------------------------------------------
@@ -35,6 +35,10 @@ extern "C" {
 			(insert)      (data right after the cursor)
 */
 
+/**
+ * The editor struct contains a list of all the line lengths in the file from the first line to the line displayed at the bottom of the editor screen
+ * However, the editor struct only stores the pointers to the lines currently displayed on the screen
+*/
 struct editor
 {
 	bool redrawText, redrawAll;
@@ -46,11 +50,10 @@ struct editor
 	char *bufferEnd; // pointer to the last byte in the buffer, which is set to '\0'
 	unsigned int dataSize;
 	char *cursorLeft, *cursorRight;
-	char *startOfPage; // position of the first character on the screen
-	char *lineBeforeScreen; // used to keep the beginnings of the lines consistent when scrolling up
+	char *startOfPage; // pointer to the first line displayed onscreen
 	int lineOffset; // number of lines above the screen
 	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN]; // pointers to lines of text displayed onscreen
-	int lineLengths[MAX_FILE_LINES];
+	int lineLengths[MAX_FILE_LINES]; // list of all line lengths ***ONLY VALID from the first line in the file to the bottom line displayed onscreen***
 };
 extern struct editor editor;
 
@@ -99,6 +102,7 @@ char *getNextBufferChar(char *prev);
 
 char *getPrevBufferChar(char *cur);
 
+// draws a line of text taking into account the split buffer
 void drawLine(char *start, int len);
 
 // scrolls down 1 line
