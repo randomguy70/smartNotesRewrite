@@ -89,7 +89,7 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
  * @param lenBuffer pointer to variable to hold the line width
  * @return returns a pointer to the next line, or NULL if there are no more lines
 */
-char* editor_LoadLine(char *readPos, int *lenBuffer);
+char* editor_LoadWrappedLine(char *readPos, int *lenBuffer);
 
 // returns the pointer to the start of the next line without word wrapping
 // stores the line's length (in characters) in lenBuffer
@@ -102,18 +102,23 @@ char *getNextBufferChar(char *prev);
 
 char *getPrevBufferChar(char *cur);
 
-// draws a line of text taking into account the split buffer
+// draws a line of text with a maximum length 'len' and taking into account the split buffer
 void drawLine(char *start, int len);
 
 // scrolls down 1 line
-// only used if settings specify word wrapping
+// used if settings specify word wrapping
 // returns true if you can scroll down, false if you can't
-bool editor_ScrollDown(void);
+bool editor_ScrollDownWrapped(void);
 
 // scrolls down 1 line
-// only used if settings specify no word wrapping
+// used if settings specify no word wrapping
 // returns true if you can scroll down, false if you can't
 bool editor_ScrollDownUnwrapped(void);
+
+// scrolls up 1 line
+// used if settings specify no word wrapping
+// returns true if you can scroll up, false if you can't
+bool editor_ScrollUpUnwrapped(void);
 
 #ifdef __cplusplus
 }

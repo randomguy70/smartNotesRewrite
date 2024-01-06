@@ -81,7 +81,11 @@ enum programState runEditor()
 		{
 			editor_ScrollDownUnwrapped();
 			editor.redrawText = true;
-			// while(kb_IsDown(kb_KeyDown)) kb_Scan();
+		}
+		if(kb_IsDown(kb_KeyUp))
+		{
+			editor_ScrollUpUnwrapped();
+			editor.redrawText = true;
 		}
 	}
 	
@@ -112,12 +116,15 @@ void drawEditorBackground()
 
 void drawEditorText()
 {
+	dbg_printf("drawing lines:\n");
 	fontlib_SetForegroundColor(black);
 	for(int i = 0, y = 20; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= 15)
 	{
 		fontlib_SetCursorPosition(2, y);
 		drawLine(editor.linePointers[i], editor.lineLengths[editor.lineOffset + i]);
+		dbg_printf("line %d, len %d\n", i, (editor.lineLengths[editor.lineOffset + i]));
 	}
+	dbg_printf("\n");
 }
 
 struct menuBar *loadEditorMenuBar()
@@ -278,7 +285,7 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 	return readPos;
 }
 
-char* editor_LoadLine(char *readPos, int *lenBuffer)
+char* editor_LoadWrappedLine(char *readPos, int *lenBuffer)
 {
 	char *prevReadPos;
 	int lineLen = 0, lineWidth = 0;
@@ -432,7 +439,7 @@ void drawLine(char *start, int len)
 	}
 }
 
-bool editor_ScrollDown(void)
+bool editor_ScrollDownWrapped(void)
 {
 	char *lastLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN -1];
 	int lastLineLen = editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1];
@@ -534,7 +541,6 @@ bool editor_ScrollDownUnwrapped(void)
 	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN - 1; i++)
 	{
 		editor.linePointers[i] = editor.linePointers[i + 1];
-		editor.lineLengths[i] = editor.lineLengths[i + 1];
 	}
 	
 	// increment the line offset
@@ -546,6 +552,31 @@ bool editor_ScrollDownUnwrapped(void)
 	editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
 	
 	// success!
+	return true;
+}
+
+bool editor_ScrollUpUnwrapped(void)
+{
+	// if we can't scroll up, too bad so sad
+	if(editor.lineOffset < 1)
+	{
+		return false;
+	}
+	
+	// shift all the line pointers down one
+	for(int i = (MAX_LINES_ON_EDITOR_SCREEN - 1); i >= 1; i--)
+	{
+		editor.linePointers[i] = editor.linePointers[i - 1];
+	}
+	
+	// decrement the line offset
+	editor.lineOffset--;
+	
+	// to find the pointer to the line we are scrolling up to, 
+	// subtract its stored length from the pointer to the line right below it
+	editor.linePointers[0] = editor.linePointers[1] - editor.lineLengths[editor.lineOffset];
+	
+	// we scrolled up, so success!
 	return true;
 }
 
