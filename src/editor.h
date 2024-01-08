@@ -23,6 +23,8 @@ extern "C" {
 
 #define MAX_LINES_ON_EDITOR_SCREEN  13
 #define MAX_LINE_PIXEL_WIDTH        (GFX_LCD_WIDTH - 4) // we want 2 pixels padding on either side of the screen
+#define EDITOR_LINE_VERT_SPACING    15
+#define EDITOR_FIRST_LINE_Y         EDITOR_HEADER_BAR_HEIGHT + 4
 
 /* Editor Split Buffer layout for instant insertion/deletion
 
@@ -50,6 +52,7 @@ struct editor
 	char *bufferEnd; // pointer to the last byte in the buffer, which is set to '\0'
 	unsigned int dataSize;
 	char *cursorLeft, *cursorRight;
+	int cursorRow, cursorCol;
 	char *startOfPage; // pointer to the first line displayed onscreen
 	int lineOffset; // number of lines above the screen
 	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN]; // pointers to lines of text displayed onscreen
@@ -119,6 +122,12 @@ bool editor_ScrollDownUnwrapped(void);
 // used if settings specify no word wrapping
 // returns true if you can scroll up, false if you can't
 bool editor_ScrollUpUnwrapped(void);
+
+// draw the editor cursor
+void drawEditorCursor(void);
+
+// calculate the x position of the editor cursor
+int getCursorX(void);
 
 #ifdef __cplusplus
 }

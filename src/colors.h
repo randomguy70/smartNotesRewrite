@@ -36,6 +36,8 @@ enum color
 	editorBackgroundColor = 30,
 	editorHeaderBarBackgroundColor,
 	editorHeaderBarBorderColor,
+	
+	cursorColor = 40,
 };
 
 #ifdef __cplusplus

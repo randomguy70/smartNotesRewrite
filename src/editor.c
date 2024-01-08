@@ -39,6 +39,8 @@ void wipeEditor()
 	editor.redrawAll = false;
 	editor.cursorLeft = NULL;
 	editor.cursorRight = NULL;
+	editor.cursorRow = 0;
+	editor.cursorCol = 0;
 }
 
 // wipes the editor and loads the menu bar
@@ -98,6 +100,7 @@ void drawEditor()
 	drawEditorBackground();
 	drawMenuBar(editor.menuBar, -1);
 	drawEditorText();
+	drawEditorCursor();
 	gfx_BlitBuffer();
 }
 
@@ -118,13 +121,40 @@ void drawEditorText()
 {
 	dbg_printf("drawing lines:\n");
 	fontlib_SetForegroundColor(black);
-	for(int i = 0, y = 20; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= 15)
+	for(int i = 0, y = EDITOR_FIRST_LINE_Y; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= EDITOR_LINE_VERT_SPACING)
 	{
 		fontlib_SetCursorPosition(2, y);
 		drawLine(editor.linePointers[i], editor.lineLengths[editor.lineOffset + i]);
 		dbg_printf("line %d, len %d\n", i, (editor.lineLengths[editor.lineOffset + i]));
 	}
 	dbg_printf("\n");
+}
+
+void drawEditorCursor(void)
+{
+	int y = EDITOR_FIRST_LINE_Y + (editor.cursorRow * EDITOR_LINE_VERT_SPACING);
+	int x = getCursorX();
+	
+	gfx_SetColor(cursorColor);
+	gfx_VertLine_NoClip(x, y, EDITOR_LINE_VERT_SPACING);
+	gfx_VertLine_NoClip(x + 1, y, EDITOR_LINE_VERT_SPACING);
+}
+
+int getCursorX(void)
+{
+	char *linePtr = editor.linePointers[editor.cursorRow];
+	
+	// we have a padding of 2 pixels on each side of the screen
+	// but the cursor should be slightly more to the left side, so make it 1 pixel
+	int x = 1;
+	
+	for(int i = 0; i < editor.cursorCol; i++)
+	{
+		x += fontlib_GetGlyphWidth(*linePtr);
+		linePtr = getNextBufferChar(linePtr);
+	}
+	
+	return x;
 }
 
 struct menuBar *loadEditorMenuBar()

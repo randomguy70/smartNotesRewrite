@@ -378,7 +378,7 @@ bool inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int bo
 				{
 					cursorX--; // makes it appear between letters more cleanly
 				}
-				gfx_SetColor(finderSelectorColor);
+				gfx_SetColor(cursorColor);
 				gfx_VertLine_NoClip(cursorX, boxY + 3, 10);
 				gfx_VertLine_NoClip(cursorX + 1, boxY + 3, 10);
 			}
