@@ -51,7 +51,7 @@ struct editor
 	char buffer[MAX_DATA_SIZE + 1]; // +1 because of the EOF byte
 	char *bufferEnd; // pointer to the last byte in the buffer, which is set to '\0'
 	unsigned int dataSize;
-	char *cursorLeft, *cursorRight;
+	char *cursorInsert, *afterCursor;
 	int cursorRow, cursorCol;
 	char *startOfPage; // pointer to the first line displayed onscreen
 	int lineOffset; // number of lines above the screen
@@ -128,6 +128,8 @@ void drawEditorCursor(void);
 
 // calculate the x position of the editor cursor
 int getCursorX(void);
+
+bool moveCursorRight(void);
 
 #ifdef __cplusplus
 }

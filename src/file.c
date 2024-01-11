@@ -71,13 +71,13 @@ void loadFileData(struct file *file)
 		return;
 	}
 	
-	editor.cursorLeft = editor.buffer;
-	editor.cursorRight = editor.buffer + MAX_DATA_SIZE - file->dataSize;
-	editor.startOfPage = editor.cursorRight;
+	editor.cursorInsert = editor.buffer;
+	editor.afterCursor = editor.buffer + MAX_DATA_SIZE - file->dataSize;
+	editor.startOfPage = editor.afterCursor;
 	
 	// copy file's data into the end of the editor text buffer
 	ti_Seek(FILE_DATA_POS, SEEK_SET, slot);
-	ti_Read(editor.cursorRight, file->dataSize, 1, slot);
+	ti_Read(editor.afterCursor, file->dataSize, 1, slot);
 	
 	ti_Close(slot);
 }

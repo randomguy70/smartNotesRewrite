@@ -37,8 +37,8 @@ void wipeEditor()
 	editor.lineOffset = 0;
 	editor.redrawText = false;
 	editor.redrawAll = false;
-	editor.cursorLeft = NULL;
-	editor.cursorRight = NULL;
+	editor.cursorInsert = NULL;
+	editor.afterCursor = NULL;
 	editor.cursorRow = 0;
 	editor.cursorCol = 0;
 }
@@ -56,7 +56,7 @@ enum programState runEditor()
 	editor.file = &finder.files[finder.selectedFile];
 	loadFileData(editor.file);
 	
-	editor_LoadUnwrappedScreen(editor.cursorRight, 0);
+	editor_LoadUnwrappedScreen(editor.afterCursor, 0);
 	
 	drawEditor();
 	
@@ -68,6 +68,7 @@ enum programState runEditor()
 			gfx_SetDrawBuffer();
 			drawEditorBackground();
 			drawEditorText();
+			drawEditorCursor();
 			gfx_BlitBuffer();
 		}
 		
@@ -79,14 +80,19 @@ enum programState runEditor()
 			return FINDER;
 		}
 		
-		if(kb_IsDown(kb_KeyDown))
+		else if(kb_IsDown(kb_KeyDown))
 		{
 			editor_ScrollDownUnwrapped();
 			editor.redrawText = true;
 		}
-		if(kb_IsDown(kb_KeyUp))
+		else if(kb_IsDown(kb_KeyUp))
 		{
 			editor_ScrollUpUnwrapped();
+			editor.redrawText = true;
+		}
+		else if(kb_IsDown(kb_KeyRight))
+		{
+			moveCursorRight();
 			editor.redrawText = true;
 		}
 	}
@@ -119,42 +125,15 @@ void drawEditorBackground()
 
 void drawEditorText()
 {
-	dbg_printf("drawing lines:\n");
+	// dbg_printf("drawing lines:\n");
 	fontlib_SetForegroundColor(black);
 	for(int i = 0, y = EDITOR_FIRST_LINE_Y; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= EDITOR_LINE_VERT_SPACING)
 	{
 		fontlib_SetCursorPosition(2, y);
 		drawLine(editor.linePointers[i], editor.lineLengths[editor.lineOffset + i]);
-		dbg_printf("line %d, len %d\n", i, (editor.lineLengths[editor.lineOffset + i]));
+		// dbg_printf("line %d, len %d\n", i, (editor.lineLengths[editor.lineOffset + i]));
 	}
-	dbg_printf("\n");
-}
-
-void drawEditorCursor(void)
-{
-	int y = EDITOR_FIRST_LINE_Y + (editor.cursorRow * EDITOR_LINE_VERT_SPACING);
-	int x = getCursorX();
-	
-	gfx_SetColor(cursorColor);
-	gfx_VertLine_NoClip(x, y, EDITOR_LINE_VERT_SPACING);
-	gfx_VertLine_NoClip(x + 1, y, EDITOR_LINE_VERT_SPACING);
-}
-
-int getCursorX(void)
-{
-	char *linePtr = editor.linePointers[editor.cursorRow];
-	
-	// we have a padding of 2 pixels on each side of the screen
-	// but the cursor should be slightly more to the left side, so make it 1 pixel
-	int x = 1;
-	
-	for(int i = 0; i < editor.cursorCol; i++)
-	{
-		x += fontlib_GetGlyphWidth(*linePtr);
-		linePtr = getNextBufferChar(linePtr);
-	}
-	
-	return x;
+	// dbg_printf("\n");
 }
 
 struct menuBar *loadEditorMenuBar()
@@ -252,13 +231,13 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 	int len = 0, width = 0;
 	
 	// see editor.h line 27 for the buffer layout
-	//  || (readPos >= editor.cursorRight && readPos <= editor.bufferEnd))
+	//  || (readPos >= editor.afterCursor && readPos <= editor.bufferEnd))
 	// first, we read words from the left of the cursor
-	if(readPos >= editor.buffer && readPos < editor.cursorLeft)
+	if(readPos >= editor.buffer && readPos < editor.cursorInsert)
 	{
 		// when we hit a Null Byte or New Line Code, return a pointer to it
 		// treat spaces as individual words
-		while(*readPos != '\0' && *readPos !='\n' && readPos < editor.cursorLeft)
+		while(*readPos != '\0' && *readPos !='\n' && readPos < editor.cursorInsert)
 		{
 			if(*readPos == ' ')
 			{
@@ -285,11 +264,11 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 				break;
 			}
 			
-			if(leftOfCursor && readPos >= editor.cursorLeft)
+			if(leftOfCursor && readPos >= editor.cursorInsert)
 			{
 				dbg_printf("switching from left to right side of buffer\n");
 				leftOfCursor = false;
-				readPos = editor.cursorRight;
+				readPos = editor.afterCursor;
 			}
 		}
 	}
@@ -306,9 +285,9 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 	*widthBuffer = width;
 	
 	// double check the reading pointer we return isn't in between the two two buffer sections
-	if(readPos >= editor.cursorLeft && readPos < editor.cursorRight)
+	if(readPos >= editor.cursorInsert && readPos < editor.afterCursor)
 	{
-		readPos = editor.cursorRight;
+		readPos = editor.afterCursor;
 	}
 	
 	dbg_printf("loaded word. Len: %d, width: %d, ascii: %s\n", *lenBuffer, *widthBuffer, readPos - *lenBuffer);
@@ -435,13 +414,14 @@ char *getNextBufferChar(char *cur)
 	{
 		return NULL;
 	}
-	if((cur >= editor.cursorLeft) && (cur < editor.cursorRight))
+	else if((cur >= editor.cursorInsert) && (cur < editor.afterCursor))
 	{
-		{
-			return editor.cursorRight;
-		}
+		return editor.afterCursor;
 	}
-	return cur;
+	else
+	{
+		return cur;
+	}
 }
 
 char *getPrevBufferChar(char *cur)
@@ -451,9 +431,9 @@ char *getPrevBufferChar(char *cur)
 	{
 		return NULL;
 	}
-	if((cur >= editor.cursorLeft) && (cur < editor.cursorRight))
+	if((cur >= editor.cursorInsert) && (cur < editor.afterCursor))
 	{
-		return editor.cursorLeft;
+		return editor.cursorInsert;
 	}
 	return cur;
 }
@@ -529,12 +509,12 @@ bool editor_ScrollDownUnwrapped(void)
 	// XXX refactor later (one if else statement)
 	// make the pointer to the new line at the bottom of the screen equal to the previous line plus the previous line's length
 	// BUT, take into account the buffer gap
-	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] < editor.cursorLeft)
+	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] < editor.cursorInsert)
 	{
 		// in the case that the cursor is on the bottom line, we jump over the buffer gap
-		if(editor.cursorLeft - editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] < editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2])
+		if(editor.cursorInsert - editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2] < editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2])
 		{
-			newLine = editor.cursorRight + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2] - (editor.cursorLeft - editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2]);
+			newLine = editor.afterCursor + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 2] - (editor.cursorInsert - editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 2]);
 		}
 		else
 		{
@@ -627,3 +607,125 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 	}
 }
 
+
+void drawEditorCursor(void)
+{
+	int y = EDITOR_FIRST_LINE_Y + (editor.cursorRow * EDITOR_LINE_VERT_SPACING);
+	int x = getCursorX();
+	
+	gfx_SetColor(cursorColor);
+	gfx_VertLine_NoClip(x, y, EDITOR_LINE_VERT_SPACING);
+	gfx_VertLine_NoClip(x + 1, y, EDITOR_LINE_VERT_SPACING);
+}
+
+int getCursorX(void)
+{
+	char *linePtr = editor.linePointers[editor.cursorRow];
+	
+	// we have a padding of 2 pixels on each side of the screen
+	// but the cursor should be slightly more to the left side, so make it 1 pixel
+	int x = 1;
+	
+	for(int i = 0; i < editor.cursorCol; i++)
+	{
+		x += fontlib_GetGlyphWidth(*linePtr);
+		linePtr = getNextBufferChar(linePtr);
+	}
+	
+	return x;
+}
+
+bool moveCursorRight(void)
+{
+	// if the cursor is already at the end of the file, it can't move farther
+	if(editor.afterCursor + 1 >= editor.bufferEnd)
+	{
+		return false;
+	}
+	
+	// if moving the cursor right makes us scroll down
+	if((editor.cursorRow == (MAX_LINES_ON_EDITOR_SCREEN - 1)) && (editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow]))
+	{
+		// XXX later, choose wrapped or unwrapped based on settings
+		if(!editor_ScrollDownUnwrapped()) return false;
+		editor.cursorRow--;
+	}
+	
+	// if we have to update the pointer to the beginning of the line since we'll move the first character to the left side of the split buffer
+	// NOTE: the pointer is wrong until we have actually moved the first character into the left side of the split buffer
+	if(editor.cursorCol == 0)
+	{
+		dbg_printf("line ptr: %p\n", editor.cursorInsert);
+		editor.linePointers[editor.cursorRow] = editor.cursorInsert;
+	}
+	
+	// if the line being moved through ends on a newline code, we have to move the code to the left side of the split buffer
+	if(*(editor.afterCursor) == '\n')
+	{	
+		editor.cursorCol = 0;
+		editor.cursorRow++;
+		*(editor.cursorInsert) = *(editor.afterCursor);
+		editor.cursorInsert++;
+		*(editor.afterCursor) = '\0';
+		editor.afterCursor++;
+	}
+	else
+	{
+		*(editor.cursorInsert) = *(editor.afterCursor);
+		editor.cursorInsert++;
+		*(editor.afterCursor) = '\0';
+		editor.afterCursor++;
+		editor.cursorCol++;
+	}
+	
+	return true;
+	
+	// // if the cursor isn't at the end of the line
+	// if(editor.cursorCol < (editor.lineLengths[editor.lineOffset + editor.cursorRow]))
+	// {
+	// 	editor.cursorCol++;
+		
+	// 	// if we move the cursor past a line pointer, we have to update the line pointer
+	// 	//  to point to the line's first character which will now be in the left half of the split buffer
+	// 	if(editor.linePointers[editor.lineOffset + editor.cursorRow] == editor.afterCursor)
+	// 	{
+	// 		editor.linePointers[editor.lineOffset + editor.cursorRow] = editor.cursorInsert;
+	// 	}
+		
+	// 	// shift one character in the split buffer to the left
+	// 	*(editor.cursorInsert) = *(editor.afterCursor);
+	// 	editor.cursorInsert++;
+	// 	editor.afterCursor++;
+		
+	// 	return true;
+	// }
+	
+	// // if the cursor is at the end of the line, move it to the next line
+	// if(editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow])
+	// {
+	// 	if(editor.cursorRow < (MAX_LINES_ON_EDITOR_SCREEN - 1))
+	// 	{
+	// 		if(*(editor.linePointers[editor.cursorRow] + editor.lineLengths[editor.lineOffset + editor.cursorRow] - 1) == '\n')
+	// 		{
+	// 			*(editor.cursorInsert) = '\n';
+	// 			editor.cursorInsert++;
+	// 			editor.afterCursor++;
+	// 		}
+	// 		editor.cursorCol = 0;
+	// 		editor.cursorRow++;
+			
+	// 		return true;
+	// 	}
+		
+	// 	// if we have to scroll down to get to the next line
+	// 	else if(editor_ScrollDownUnwrapped() == true)
+	// 	{
+	// 		editor.cursorRow--;
+	// 		return moveCursorRight();
+	// 	}
+	// 	else
+	// 	{
+	// 		return false;
+	// 	}
+	// }
+}
