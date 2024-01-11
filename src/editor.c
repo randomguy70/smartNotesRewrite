@@ -644,11 +644,19 @@ bool moveCursorRight(void)
 	}
 	
 	// if moving the cursor right makes us scroll down
-	if((editor.cursorRow == (MAX_LINES_ON_EDITOR_SCREEN - 1)) && (editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow]))
+	if(editor.cursorRow == MAX_LINES_ON_EDITOR_SCREEN)
 	{
-		// XXX later, choose wrapped or unwrapped based on settings
-		if(!editor_ScrollDownUnwrapped()) return false;
-		editor.cursorRow--;
+		if((*(editor.afterCursor) != '\n') || (editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow]))
+		{
+			if(editor_ScrollDownUnwrapped() == true)
+			{
+				editor.cursorRow--;
+			}
+			else
+			{
+				return false;
+			}
+		}
 	}
 	
 	// if we have to update the pointer to the beginning of the line since we'll move the first character to the left side of the split buffer
@@ -661,13 +669,19 @@ bool moveCursorRight(void)
 	
 	// if the line being moved through ends on a newline code, we have to move the code to the left side of the split buffer
 	if(*(editor.afterCursor) == '\n')
-	{	
+	{
 		editor.cursorCol = 0;
 		editor.cursorRow++;
 		*(editor.cursorInsert) = *(editor.afterCursor);
 		editor.cursorInsert++;
 		*(editor.afterCursor) = '\0';
 		editor.afterCursor++;
+	}
+	// if the cursor needs to move down a line without updating the split buffer
+	else if(editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow])
+	{
+		editor.cursorCol = 0;
+		editor.cursorRow++;
 	}
 	else
 	{
