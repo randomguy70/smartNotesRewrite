@@ -95,6 +95,11 @@ enum programState runEditor()
 			moveCursorRight();
 			editor.redrawText = true;
 		}
+		else if(kb_IsDown(kb_KeyLeft))
+		{
+			moveCursorLeft();
+			editor.redrawText = true;
+		}
 	}
 	
 	return programState;
@@ -125,15 +130,12 @@ void drawEditorBackground()
 
 void drawEditorText()
 {
-	// dbg_printf("drawing lines:\n");
 	fontlib_SetForegroundColor(black);
 	for(int i = 0, y = EDITOR_FIRST_LINE_Y; i < MAX_LINES_ON_EDITOR_SCREEN; i++, y+= EDITOR_LINE_VERT_SPACING)
 	{
 		fontlib_SetCursorPosition(2, y);
 		drawLine(editor.linePointers[i], editor.lineLengths[editor.lineOffset + i]);
-		// dbg_printf("line %d, len %d\n", i, (editor.lineLengths[editor.lineOffset + i]));
 	}
-	// dbg_printf("\n");
 }
 
 struct menuBar *loadEditorMenuBar()
@@ -616,6 +618,7 @@ void drawEditorCursor(void)
 	gfx_SetColor(cursorColor);
 	gfx_VertLine_NoClip(x, y, EDITOR_LINE_VERT_SPACING);
 	gfx_VertLine_NoClip(x + 1, y, EDITOR_LINE_VERT_SPACING);
+	dbg_printf("cursor x: %d, y: %d\n", editor.cursorCol, editor.cursorRow);
 }
 
 int getCursorX(void)
@@ -635,6 +638,65 @@ int getCursorX(void)
 	return x;
 }
 
+bool moveCursorLeft(void)
+{
+	// check if moving the cursor left makes us scroll up
+	if(editor.cursorRow == 0 && editor.cursorCol == 0)
+	{
+		if(editor_ScrollUpUnwrapped() == true)
+		{
+			editor.cursorRow++;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	// if we're not at the far left side of the line
+	if(editor.cursorCol > 0)
+	{
+		editor.cursorInsert--;
+		editor.afterCursor--;
+		editor.cursorCol--;
+		*(editor.afterCursor) = *(editor.cursorInsert);
+		*(editor.cursorInsert) = '\0';
+	}
+	// if we're going to have to move up a line
+	else if(editor.cursorCol == 0)
+	{
+		dbg_printf("moving up a line\n");
+		// if the line above ends with a newline, don't count the newline when calculating the cursor column
+		if(*(editor.cursorInsert - 1) == '\n')
+		{
+			dbg_printf("moving up past newline code\n");
+			editor.cursorCol = editor.lineLengths[editor.lineOffset + editor.cursorRow - 1];
+			editor.cursorRow--;
+			editor.afterCursor--;
+			*(editor.afterCursor) = '\n';
+			editor.cursorInsert--;
+			*(editor.cursorInsert) = '\0';
+		}
+		else
+		{
+			editor.cursorCol = editor.lineLengths[editor.lineOffset + editor.cursorRow - 1];
+			editor.cursorRow--;
+		}
+	}
+	
+	// if we moved the cursor to the far left side of any line, we need to update the pointer to the beginning of the line
+	// to point to the right side of the split buffer
+	if(editor.cursorCol == 0)
+	{
+		dbg_printf("updated line %d's pointer to %p\n", editor.lineOffset + editor.cursorRow, editor.afterCursor);
+		editor.linePointers[editor.lineOffset + editor.cursorRow] = editor.afterCursor;
+	}
+	
+	dbg_printf("cursor insert: %p, after cursor: %p\n", editor.cursorInsert, editor.afterCursor);
+	
+	return true;
+}
+
 bool moveCursorRight(void)
 {
 	// if the cursor is already at the end of the file, it can't move farther
@@ -643,9 +705,11 @@ bool moveCursorRight(void)
 		return false;
 	}
 	
-	// if moving the cursor right makes us scroll down
+	// check if moving the cursor right makes us scroll down
+	// first check if we're on the last line...
 	if(editor.cursorRow == MAX_LINES_ON_EDITOR_SCREEN)
 	{
+		// then, check if the cursor is at the end of the visible line (excluding newline codes)
 		if((*(editor.afterCursor) != '\n') || (editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow]))
 		{
 			if(editor_ScrollDownUnwrapped() == true)
@@ -693,53 +757,4 @@ bool moveCursorRight(void)
 	}
 	
 	return true;
-	
-	// // if the cursor isn't at the end of the line
-	// if(editor.cursorCol < (editor.lineLengths[editor.lineOffset + editor.cursorRow]))
-	// {
-	// 	editor.cursorCol++;
-		
-	// 	// if we move the cursor past a line pointer, we have to update the line pointer
-	// 	//  to point to the line's first character which will now be in the left half of the split buffer
-	// 	if(editor.linePointers[editor.lineOffset + editor.cursorRow] == editor.afterCursor)
-	// 	{
-	// 		editor.linePointers[editor.lineOffset + editor.cursorRow] = editor.cursorInsert;
-	// 	}
-		
-	// 	// shift one character in the split buffer to the left
-	// 	*(editor.cursorInsert) = *(editor.afterCursor);
-	// 	editor.cursorInsert++;
-	// 	editor.afterCursor++;
-		
-	// 	return true;
-	// }
-	
-	// // if the cursor is at the end of the line, move it to the next line
-	// if(editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow])
-	// {
-	// 	if(editor.cursorRow < (MAX_LINES_ON_EDITOR_SCREEN - 1))
-	// 	{
-	// 		if(*(editor.linePointers[editor.cursorRow] + editor.lineLengths[editor.lineOffset + editor.cursorRow] - 1) == '\n')
-	// 		{
-	// 			*(editor.cursorInsert) = '\n';
-	// 			editor.cursorInsert++;
-	// 			editor.afterCursor++;
-	// 		}
-	// 		editor.cursorCol = 0;
-	// 		editor.cursorRow++;
-			
-	// 		return true;
-	// 	}
-		
-	// 	// if we have to scroll down to get to the next line
-	// 	else if(editor_ScrollDownUnwrapped() == true)
-	// 	{
-	// 		editor.cursorRow--;
-	// 		return moveCursorRight();
-	// 	}
-	// 	else
-	// 	{
-	// 		return false;
-	// 	}
-	// }
 }

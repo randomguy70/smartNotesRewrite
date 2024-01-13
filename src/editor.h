@@ -126,9 +126,10 @@ bool editor_ScrollUpUnwrapped(void);
 // draw the editor cursor
 void drawEditorCursor(void);
 
-// calculate the x position of the editor cursor
+// calculate the x position of the editor cursor, taking into account a 1 pixel buffer on the left side of the screen
 int getCursorX(void);
 
+bool moveCursorLeft(void);
 bool moveCursorRight(void);
 
 #ifdef __cplusplus
