@@ -41,6 +41,7 @@ void wipeEditor()
 	editor.afterCursor = NULL;
 	editor.cursorRow = 0;
 	editor.cursorCol = 0;
+	editor.desiredCol = 0;
 }
 
 // wipes the editor and loads the menu bar
@@ -62,14 +63,14 @@ enum programState runEditor()
 	
 	while(programState == EDITOR)
 	{
-		if(editor.redrawText)
+		if(editor.redrawText == true)
 		{
 			editor.redrawText = false;
 			gfx_SetDrawBuffer();
 			drawEditorBackground();
 			drawEditorText();
 			drawEditorCursor();
-			gfx_BlitBuffer();
+			gfx_SwapDraw();
 		}
 		
 		kb_Scan();
@@ -80,16 +81,6 @@ enum programState runEditor()
 			return FINDER;
 		}
 		
-		else if(kb_IsDown(kb_KeyDown))
-		{
-			editor_ScrollDownUnwrapped();
-			editor.redrawText = true;
-		}
-		else if(kb_IsDown(kb_KeyUp))
-		{
-			editor_ScrollUpUnwrapped();
-			editor.redrawText = true;
-		}
 		else if(kb_IsDown(kb_KeyRight))
 		{
 			moveCursorRight();
@@ -609,7 +600,6 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 	}
 }
 
-
 void drawEditorCursor(void)
 {
 	int y = EDITOR_FIRST_LINE_Y + (editor.cursorRow * EDITOR_LINE_VERT_SPACING);
@@ -618,7 +608,6 @@ void drawEditorCursor(void)
 	gfx_SetColor(cursorColor);
 	gfx_VertLine_NoClip(x, y, EDITOR_LINE_VERT_SPACING);
 	gfx_VertLine_NoClip(x + 1, y, EDITOR_LINE_VERT_SPACING);
-	dbg_printf("cursor x: %d, y: %d\n", editor.cursorCol, editor.cursorRow);
 }
 
 int getCursorX(void)
@@ -692,8 +681,8 @@ bool moveCursorLeft(void)
 		editor.linePointers[editor.lineOffset + editor.cursorRow] = editor.afterCursor;
 	}
 	
-	dbg_printf("cursor insert: %p, after cursor: %p\n", editor.cursorInsert, editor.afterCursor);
-	
+	editor.desiredCol = editor.cursorCol;
+		
 	return true;
 }
 
@@ -707,11 +696,12 @@ bool moveCursorRight(void)
 	
 	// check if moving the cursor right makes us scroll down
 	// first check if we're on the last line...
-	if(editor.cursorRow == MAX_LINES_ON_EDITOR_SCREEN)
+	if(editor.cursorRow == (MAX_LINES_ON_EDITOR_SCREEN - 1))
 	{
 		// then, check if the cursor is at the end of the visible line (excluding newline codes)
-		if((*(editor.afterCursor) != '\n') || (editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow]))
+		if((*(editor.afterCursor) == '\n') || (editor.cursorCol == editor.lineLengths[editor.lineOffset + editor.cursorRow]))
 		{
+			// XXX delete the return true (it's just for debugging purposes)
 			if(editor_ScrollDownUnwrapped() == true)
 			{
 				editor.cursorRow--;
@@ -727,7 +717,6 @@ bool moveCursorRight(void)
 	// NOTE: the pointer is wrong until we have actually moved the first character into the left side of the split buffer
 	if(editor.cursorCol == 0)
 	{
-		dbg_printf("line ptr: %p\n", editor.cursorInsert);
 		editor.linePointers[editor.cursorRow] = editor.cursorInsert;
 	}
 	
@@ -756,5 +745,12 @@ bool moveCursorRight(void)
 		editor.cursorCol++;
 	}
 	
+	editor.desiredCol = editor.cursorCol;
+	
 	return true;
+}
+
+bool moveCursorUp(void)
+{
+	
 }

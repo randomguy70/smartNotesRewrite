@@ -53,6 +53,7 @@ struct editor
 	unsigned int dataSize;
 	char *cursorInsert, *afterCursor;
 	int cursorRow, cursorCol;
+	int desiredCol;
 	char *startOfPage; // pointer to the first line displayed onscreen
 	int lineOffset; // number of lines above the screen
 	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN]; // pointers to lines of text displayed onscreen
@@ -131,6 +132,7 @@ int getCursorX(void);
 
 bool moveCursorLeft(void);
 bool moveCursorRight(void);
+bool moveCursorUp(void);
 
 #ifdef __cplusplus
 }
