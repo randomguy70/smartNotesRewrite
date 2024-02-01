@@ -283,7 +283,6 @@ char *editor_LoadWord(char *readPos, int *lenBuffer, int *widthBuffer, int maxWi
 		readPos = editor.afterCursor;
 	}
 	
-	dbg_printf("loaded word. Len: %d, width: %d, ascii: %s\n", *lenBuffer, *widthBuffer, readPos - *lenBuffer);
 	return readPos;
 }
 
@@ -654,11 +653,9 @@ bool moveCursorLeft(void)
 	// if we're going to have to move up a line
 	else if(editor.cursorCol == 0)
 	{
-		dbg_printf("moving up a line\n");
 		// if the line above ends with a newline, don't count the newline when calculating the cursor column
 		if(*(editor.cursorInsert - 1) == '\n')
 		{
-			dbg_printf("moving up past newline code\n");
 			editor.cursorCol = editor.lineLengths[editor.lineOffset + editor.cursorRow - 1];
 			editor.cursorRow--;
 			editor.afterCursor--;
@@ -704,7 +701,14 @@ bool moveCursorRight(void)
 			// XXX delete the return true (it's just for debugging purposes)
 			if(editor_ScrollDownUnwrapped() == true)
 			{
-				editor.cursorRow--;
+				editor.cursorCol = 0;
+				if(*(editor.afterCursor) == '\n')
+				{
+					*editor.cursorInsert = '\n';
+					editor.cursorInsert++;
+					*editor.afterCursor = '\0';
+					*editor.afterCursor++;
+				}
 			}
 			else
 			{
