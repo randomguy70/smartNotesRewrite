@@ -132,7 +132,7 @@ int getCursorX(void);
 
 bool moveCursorLeft(void);
 bool moveCursorRight(void);
-bool moveCursorUp(void);
+bool moveCursorDown(void);
 
 #ifdef __cplusplus
 }
