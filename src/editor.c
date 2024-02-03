@@ -760,41 +760,63 @@ bool moveCursorRight(void)
 }
 
 bool moveCursorDown(void)
-{
+{	
 	// XXX allow scrolling down a line when you get to the bottom of the page
-	if((editor.cursorRow >= MAX_LINES_ON_EDITOR_SCREEN - 1) || (editor.linePointers[editor.cursorRow + 1] == NULL))
+	if(editor.cursorRow >= MAX_LINES_ON_EDITOR_SCREEN - 1)
 	{
-		return false;
+		if(editor_ScrollDownUnwrapped() == false) return false;
+		editor.cursorRow--;
 	}
+	
 	dbg_printf("Before editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow);
-	// if the line below is large enough so that the cursor can stay on the same column
-	if((editor.linePointers[editor.cursorRow + 1] + editor.cursorCol) < editor.bufferEnd)
+	
+	// if there isn't another line to move down to, then move the cursor to the end of the current line
+	if(editor.linePointers[editor.cursorRow + 1] == NULL)
 	{
-		// shift all the data until the beginning of the next line
-		int shiftSize = (editor.linePointers[editor.cursorRow + 1] + editor.cursorCol) - editor.afterCursor;
-		dbg_printf("Shift size #1 %d\n", shiftSize);
-		
-		for(int i = 0; i < shiftSize; i++)
+		for(int i = editor.cursorCol; (i < editor.lineLengths[editor.cursorRow]) && (*editor.afterCursor != '\n'); i++)
 		{
 			*(editor.cursorInsert) = *(editor.afterCursor);
 			editor.cursorInsert++;
-			*(editor.afterCursor) = '\0';
 			editor.afterCursor++;
+			editor.cursorCol++;
 		}
-		// update either the next line or the previous line's pointer to point to the left side of the buffer
-		// depending on which line's beginning we skipped over
-		if(editor.cursorCol > 0)
-		{
-			editor.linePointers[editor.cursorRow + 1] = editor.cursorInsert - editor.cursorCol;
-		}
-		else
-		{
-			editor.linePointers[editor.cursorRow] = (editor.cursorInsert - shiftSize);
-		}
-		
-		dbg_printf("After editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow);
-		editor.cursorRow++;
 	}
+	
+	int newCursorCol = editor.lineLengths[editor.cursorRow + 1];
+	if(*(editor.linePointers[editor.cursorRow + 1] + newCursorCol - 1) == '\n')
+	{
+		newCursorCol--;		
+	}
+	if(newCursorCol > editor.desiredCol)
+	{
+		newCursorCol = editor.desiredCol;
+	}
+	
+	// shift the buffer data left until the beginning of the next line
+	int shiftSize = (editor.linePointers[editor.cursorRow + 1] + newCursorCol) - editor.afterCursor;
+	dbg_printf("Shift size #1 %d\n", shiftSize);
+	
+	for(int i = 0; i < shiftSize; i++)
+	{
+		*(editor.cursorInsert) = *(editor.afterCursor);
+		editor.cursorInsert++;
+		*(editor.afterCursor) = '\0';
+		editor.afterCursor++;
+	}
+	// update either the next line or the previous line's pointer to point to the left side of the buffer
+	// depending on which line's beginning we skipped over
+	if(editor.cursorCol > 0)
+	{
+		editor.linePointers[editor.cursorRow + 1] = editor.cursorInsert - newCursorCol;
+	}
+	else
+	{
+		editor.linePointers[editor.cursorRow] = (editor.cursorInsert - shiftSize);
+	}
+	
+	dbg_printf("After editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d, Desired Col %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow, editor.desiredCol);
+	editor.cursorRow++;
+	editor.cursorCol = newCursorCol;
 	
 	return true;
 }
