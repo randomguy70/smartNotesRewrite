@@ -573,13 +573,12 @@ bool editor_ScrollDownUnwrapped(void)
 	
 	// increment the line offset
 	editor.lineOffset++;
-		
+	
 	// set the pointer of the new line and load its length
 	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
 	editor_LoadUnwrappedLine(newLine, &newLineLen, MAX_LINE_PIXEL_WIDTH);
 	editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
-	dbg_printf("new line scrolled to. Pointer: %p\n", editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1]);
-	// success!
+
 	return true;
 }
 
@@ -701,11 +700,12 @@ bool moveCursorLeft(void)
 	if(editor.cursorCol == 0)
 	{
 		dbg_printf("updated line %d's pointer to %p\n", editor.lineOffset + editor.cursorRow, editor.afterCursor);
-		editor.linePointers[editor.lineOffset + editor.cursorRow] = editor.afterCursor;
+		editor.linePointers[editor.cursorRow] = editor.afterCursor;
 	}
 	
 	editor.desiredCol = editor.cursorCol;
-		
+	dbg_printf("Cursor Pos - Row: %d, Col: %d, Insert: %p, AfterCursor: %p, LinePointer: %p\n", editor.cursorRow, editor.cursorCol, editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow]);
+	
 	return true;
 }
 
@@ -776,6 +776,8 @@ bool moveCursorRight(void)
 	}
 	
 	editor.desiredCol = editor.cursorCol;
+	
+	dbg_printf("Cursor Pos - Row: %d, Col: %d, Insert: %p, AfterCursor: %p, LinePointer: %p\n", editor.cursorRow, editor.cursorCol, editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow]);
 	
 	return true;
 }
