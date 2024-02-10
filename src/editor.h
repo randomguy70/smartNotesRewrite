@@ -99,6 +99,10 @@ char* editor_LoadWrappedLine(char *readPos, int *lenBuffer);
 // stores the line's length (in characters) in lenBuffer
 char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth);
 
+// returns the pointer to the beginning of the next line taking into account the split buffer
+// *** you already have to know the length of the line you're starting from
+char *getNextLinePtrFromLoadedLine(char *start, int length);
+
 // returns the pointer to the next character from the editor buffer,
 // takes into account the split between the left and right sections.
 // returns NULL if there are no more characters

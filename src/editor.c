@@ -81,6 +81,7 @@ enum programState runEditor()
 			return FINDER;
 		}
 		
+		
 		else if(kb_IsDown(kb_KeyRight))
 		{
 			moveCursorRight();
@@ -404,6 +405,25 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
 	return NULL;
 }
 
+char *getNextLinePtrFromLoadedLine(char *start, int length)
+{
+	if(start >= editor.afterCursor)
+	{
+		return start + length;
+	}
+	else
+	{
+		if(editor.cursorInsert - start >= length)
+		{
+			return start + length;
+		}
+		else
+		{
+			return editor.afterCursor + (length - (editor.cursorInsert - start));
+		}
+	}
+}
+
 char *getNextBufferChar(char *cur)
 {
 	cur++;
@@ -531,21 +551,16 @@ bool editor_ScrollDownUnwrapped(void)
 }
 */
 
+// XXX take into account split buffer when cursorCol > 0 and is on bottom line and we're scrolling down :P
 bool editor_ScrollDownUnwrapped(void)
 {
-	char *lastLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN -1];
+	char *lastLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1];
 	int lastLineLen = editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1];
-	char *newLine = lastLine + lastLineLen;
+	char *newLine = getNextLinePtrFromLoadedLine(lastLine, lastLineLen);
 	int newLineLen;
 	
-	dbg_printf("Printing out line pointers:\n");
-	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN; i++)
-	{
-		dbg_printf("%p\n", editor.linePointers[i]);
-	}
-	
 	// if there aren't any more lines to load
-	if((lastLine == NULL) || (newLine >= editor.bufferEnd))
+	if((lastLine == NULL) || newLine >= editor.bufferEnd)
 	{
 		return false;
 	}
@@ -558,12 +573,12 @@ bool editor_ScrollDownUnwrapped(void)
 	
 	// increment the line offset
 	editor.lineOffset++;
-	
+		
 	// set the pointer of the new line and load its length
 	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
 	editor_LoadUnwrappedLine(newLine, &newLineLen, MAX_LINE_PIXEL_WIDTH);
 	editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
-	
+	dbg_printf("new line scrolled to. Pointer: %p\n", editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1]);
 	// success!
 	return true;
 }
@@ -765,6 +780,10 @@ bool moveCursorRight(void)
 	return true;
 }
 
+// XXX XXX XXX
+// REMEMBER TO FIX SCROLLING DOWN BUG
+// ALSO, SPEED UP SCROLLING PLS!!!
+// maybe don't redraw everything when you move the cursor - just redraw the characters on either side of the cursor
 bool moveCursorDown(void)
 {
 	if(editor.afterCursor == editor.bufferEnd)
@@ -772,18 +791,20 @@ bool moveCursorDown(void)
 		return false;
 	}
 	
-	if(editor.cursorRow == MAX_LINES_ON_EDITOR_SCREEN - 1)
+	// if we're at the bottom of the screen, try scrolling down 1 line
+	if(editor.cursorRow == (MAX_LINES_ON_EDITOR_SCREEN - 1))
 	{
 		bool scrollDownHuh = editor_ScrollDownUnwrapped();
-		dbg_printf("scrolled down\n\n\n\n\n\n\n");
+		dbg_printf("scrolled down\n");
 		if(!scrollDownHuh)
 		{
+			dbg_printf("scrolling down failed\n");
 			return false;
 		}
 		else
 		{
+			dbg_printf("scrolling down worked\n");
 			editor.cursorRow--;
-			return false;
 		}
 	}
 	
@@ -792,7 +813,7 @@ bool moveCursorDown(void)
 	// if we're already on the last line, then move the cursor to the end of the current line
 	if(editor.linePointers[editor.cursorRow + 1] == NULL)
 	{
-		int length = editor.lineLengths[editor.cursorRow] - editor.cursorCol;
+		int length = editor.lineLengths[editor.lineOffset + editor.cursorRow] - editor.cursorCol;
 		// got to update those line pointers...
 		if(length > 0)
 		{
@@ -813,7 +834,7 @@ bool moveCursorDown(void)
 		return true;
 	}
 	
-	int newCursorCol = editor.lineLengths[editor.cursorRow + 1];
+	int newCursorCol = editor.lineLengths[editor.lineOffset + editor.cursorRow + 1];
 	if(*(editor.linePointers[editor.cursorRow + 1] + newCursorCol - 1) == '\n')
 	{
 		newCursorCol--;		
