@@ -783,7 +783,6 @@ bool moveCursorRight(void)
 }
 
 // XXX XXX XXX
-// REMEMBER TO FIX SCROLLING DOWN BUG
 // ALSO, SPEED UP SCROLLING PLS!!!
 // maybe don't redraw everything when you move the cursor - just redraw the characters on either side of the cursor
 bool moveCursorDown(void)
