@@ -782,6 +782,99 @@ bool moveCursorRight(void)
 	return true;
 }
 
+// XXX THIS FUNCTION IS NOT DONE YET!!!
+// XXX do some refactoring to not check anything twice (these if statements pain me)
+bool moveCursorUp(void)
+{
+	// if we're at the very beginning of the file, we can't move the cursor up
+	if((editor.lineOffset <= 0) && (editor.cursorCol <= 0))
+	{
+		return false;
+	}
+	
+	// if we're at the top of the screen, try scrolling up 1 line
+	if(editor.cursorRow == 0)
+	{
+		bool scrollUpHuh = editor_ScrollUpUnwrapped();
+		if(!scrollUpHuh)
+		{
+			dbg_printf("scrolling up failed. Moving cursor to the start of the line instead\n");
+		}
+		else
+		{
+			dbg_printf("scrolling up worked\n");
+			editor.cursorRow++;
+		}
+	}
+	
+	// if we're still on the first line (which means we couldn't scroll up), then move the cursor to the start of the line (standard behavior)
+	if(editor.cursorRow == 0)
+	{
+		// don't think i need this check...but anyways
+		if(editor.cursorCol <= 0)
+		{
+			return false;
+		}
+		
+		int length = editor.cursorCol;
+		
+		
+		for(int i = editor.cursorCol; i > -1; i--)
+		{
+			editor.cursorInsert--;
+			editor.afterCursor--;
+			*(editor.afterCursor) = *(editor.cursorInsert);
+		}
+		
+		editor.cursorCol = 0;
+		editor.linePointers[editor.cursorRow] = editor.afterCursor;
+		
+		return true;
+	}
+	// if we're actually going to move up a line
+	else
+	{
+		
+	}
+	
+	int newCursorCol = editor.lineLengths[editor.lineOffset + editor.cursorRow];
+	if(*(editor.linePointers[editor.cursorRow + 1] + newCursorCol - 1) == '\n')
+	{
+		newCursorCol--;		
+	}
+	if(newCursorCol > editor.desiredCol)
+	{
+		newCursorCol = editor.desiredCol;
+	}
+	
+	// shift the buffer data left until the beginning of the next line
+	int shiftSize = (editor.linePointers[editor.cursorRow + 1] + newCursorCol) - editor.afterCursor;
+	
+	for(int i = 0; i < shiftSize; i++)
+	{
+		*(editor.cursorInsert) = *(editor.afterCursor);
+		editor.cursorInsert++;
+		*(editor.afterCursor) = '\0';
+		editor.afterCursor++;
+	}
+	// update either the next line or the previous line's pointer to point to the left side of the buffer
+	// depending on which line's beginning we skipped over
+	if(editor.cursorCol > 0)
+	{
+		editor.linePointers[editor.cursorRow + 1] = editor.cursorInsert - newCursorCol;
+	}
+	else
+	{
+		editor.linePointers[editor.cursorRow] = (editor.cursorInsert - shiftSize);
+	}
+	
+	dbg_printf("After editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d, Desired Col %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow, editor.desiredCol);
+	editor.cursorRow++;
+	editor.cursorCol = newCursorCol;
+	
+	return true;
+}
+
 // XXX XXX XXX
 // ALSO, SPEED UP SCROLLING PLS!!!
 // maybe don't redraw everything when you move the cursor - just redraw the characters on either side of the cursor
