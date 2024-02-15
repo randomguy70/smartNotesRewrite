@@ -95,8 +95,8 @@ void generateTestingFiles(void)
 	uint8_t nullBytes[17] = {0};
 	
 	text[3] = '\n';
-	text[45] = '\n';
-	text[55] = '\n';
+	text[44] = '\n';
+	text[54] = '\n';
 	
 	for(int i = 0; i < 14; i++)
 	{

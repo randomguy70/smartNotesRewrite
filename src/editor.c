@@ -92,6 +92,11 @@ enum programState runEditor()
 			moveCursorLeft();
 			editor.redrawText = true;
 		}
+		else if(kb_IsDown(kb_KeyUp))
+		{
+			moveCursorUp();
+			editor.redrawText = true;
+		}
 		else if(kb_IsDown(kb_KeyDown))
 		{
 			moveCursorDown();
@@ -600,8 +605,15 @@ bool editor_ScrollUpUnwrapped(void)
 	editor.lineOffset--;
 	
 	// to find the pointer to the line we are scrolling up to, 
-	// subtract its stored length from the pointer to the line right below it
-	editor.linePointers[0] = editor.linePointers[1] - editor.lineLengths[editor.lineOffset];
+	// subtract its stored length from the pointer to the line right below it (MAKE SURE TO FACTOR IN THE SPLIT BUFFER and line pointers when the cursor column = 0)
+	if(editor.cursorCol == 0)
+	{
+		editor.linePointers[0] = editor.cursorInsert - editor.lineLengths[editor.lineOffset];
+	}
+	else
+	{
+		editor.linePointers[0] = editor.linePointers[1] - editor.lineLengths[editor.lineOffset];
+	}
 	
 	// we scrolled up, so success!
 	return true;
@@ -782,12 +794,11 @@ bool moveCursorRight(void)
 	return true;
 }
 
-// XXX THIS FUNCTION IS NOT DONE YET!!!
-// XXX do some refactoring to not check anything twice (these if statements pain me)
+// XXX fix scrolling up bug (very perplexing)
 bool moveCursorUp(void)
 {
 	// if we're at the very beginning of the file, we can't move the cursor up
-	if((editor.lineOffset <= 0) && (editor.cursorCol <= 0))
+	if((editor.cursorRow <= 0) && (editor.lineOffset <= 0) && (editor.cursorCol <= 0))
 	{
 		return false;
 	}
@@ -807,70 +818,71 @@ bool moveCursorUp(void)
 		}
 	}
 	
+	int newCol;
+	int newRow;
+	int newLineLen;
+	int dataShiftSize;
+	
+	// this if-else block calculates the new cursor position and how much data we need to shift to the right
+	
 	// if we're still on the first line (which means we couldn't scroll up), then move the cursor to the start of the line (standard behavior)
 	if(editor.cursorRow == 0)
 	{
-		// don't think i need this check...but anyways
-		if(editor.cursorCol <= 0)
-		{
-			return false;
-		}
-		
-		int length = editor.cursorCol;
-		
-		
-		for(int i = editor.cursorCol; i > -1; i--)
-		{
-			editor.cursorInsert--;
-			editor.afterCursor--;
-			*(editor.afterCursor) = *(editor.cursorInsert);
-		}
-		
-		editor.cursorCol = 0;
-		editor.linePointers[editor.cursorRow] = editor.afterCursor;
-		
-		return true;
+		dbg_printf("Moving to start of line\n");
+		newCol = 0;
+		newRow = 0;
+		dataShiftSize = editor.cursorCol;		
 	}
 	// if we're actually going to move up a line
 	else
 	{
+		dbg_printf("Moving up a line\n");
+		newCol = editor.desiredCol;
+		newRow = editor.cursorRow - 1;
+		newLineLen = editor.lineLengths[editor.lineOffset + newRow];
+				
+		// if we have to move the cursor left to fit on a smaller line
+		if(newLineLen <= newCol)
+		{
+			if(*(editor.linePointers[newRow] + newLineLen) == '\n')
+			{
+				newCol = newLineLen - 1;
+			}
+			else
+			{
+				newCol = newLineLen;
+			}
+		}
 		
+		dataShiftSize = editor.cursorInsert - (editor.linePointers[newRow] + newCol);
+		
+		// update the current line's pointer, if necessary, to make it point to the right side of the split buffer
+		if(editor.cursorCol > 0)
+		{
+			editor.linePointers[editor.cursorRow] = editor.afterCursor - editor.cursorCol;
+		}
 	}
 	
-	int newCursorCol = editor.lineLengths[editor.lineOffset + editor.cursorRow];
-	if(*(editor.linePointers[editor.cursorRow + 1] + newCursorCol - 1) == '\n')
+	dbg_printf("Going to shift %d bytes\n", dataShiftSize);
+	
+	// now that we know how much data to shift and all that stuff, actually shift it!
+	for(int i = 0; i < dataShiftSize; i++)
 	{
-		newCursorCol--;		
-	}
-	if(newCursorCol > editor.desiredCol)
-	{
-		newCursorCol = editor.desiredCol;
+		editor.afterCursor--;
+		editor.cursorInsert--;
+		*(editor.afterCursor) = *(editor.cursorInsert);
+		*(editor.cursorInsert) = '\0';
 	}
 	
-	// shift the buffer data left until the beginning of the next line
-	int shiftSize = (editor.linePointers[editor.cursorRow + 1] + newCursorCol) - editor.afterCursor;
+	editor.cursorCol = newCol;
+	editor.cursorRow = newRow;
 	
-	for(int i = 0; i < shiftSize; i++)
+	if(newCol == 0)
 	{
-		*(editor.cursorInsert) = *(editor.afterCursor);
-		editor.cursorInsert++;
-		*(editor.afterCursor) = '\0';
-		editor.afterCursor++;
-	}
-	// update either the next line or the previous line's pointer to point to the left side of the buffer
-	// depending on which line's beginning we skipped over
-	if(editor.cursorCol > 0)
-	{
-		editor.linePointers[editor.cursorRow + 1] = editor.cursorInsert - newCursorCol;
-	}
-	else
-	{
-		editor.linePointers[editor.cursorRow] = (editor.cursorInsert - shiftSize);
+		editor.linePointers[newRow] = editor.afterCursor;
 	}
 	
-	dbg_printf("After editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d, Desired Col %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow, editor.desiredCol);
-	editor.cursorRow++;
-	editor.cursorCol = newCursorCol;
+	dbg_printf("Editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d, Desired Col %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow, editor.desiredCol);
 	
 	return true;
 }
