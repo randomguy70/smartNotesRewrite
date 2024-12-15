@@ -57,6 +57,7 @@ struct editor
 	char *startOfPage; // pointer to the first line displayed onscreen
 	int lineOffset; // number of lines above the screen
 	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN]; // pointers to lines of text displayed onscreen
+	bool lineTerminated[MAX_LINES_ON_EDITOR_SCREEN]; // whether or not each line is terminated by a newline code ('\n')
 	int lineLengths[MAX_FILE_LINES]; // list of all line lengths ***ONLY VALID from the first line in the file to the bottom line displayed onscreen***
 };
 extern struct editor editor;
@@ -97,7 +98,7 @@ char* editor_LoadWrappedLine(char *readPos, int *lenBuffer);
 
 // returns the pointer to the start of the next line without word wrapping
 // stores the line's length (in characters) in lenBuffer
-char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth);
+char *editor_LoadUnwrappedLine(char *readPos, int maxWidth, int *lenBuffer, bool *lineTerminated);
 
 // returns the pointer to the beginning of the next line taking into account the split buffer
 // *** you already have to know the length of the line you're starting from

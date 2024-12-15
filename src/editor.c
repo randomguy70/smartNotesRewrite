@@ -28,6 +28,7 @@ void wipeEditor()
 	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN; i++)
 	{
 		editor.linePointers[i] = NULL;
+		editor.lineTerminated[i] = false;
 	}
 	
 	// initialize some buffer metadata
@@ -44,7 +45,7 @@ void wipeEditor()
 	editor.desiredCol = 0;
 }
 
-// wipes the editor and loads the menu bar
+// loads the menu bar
 void initEditor()
 {
 	editor.menuBar = loadEditorMenuBar();
@@ -379,9 +380,10 @@ char* editor_LoadWrappedLine(char *readPos, int *lenBuffer)
 	return readPos;
 }
 
-char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
+char *editor_LoadUnwrappedLine(char *readPos, int maxWidth, int *lenBuffer, bool *lineTerminated)
 {
 	*lenBuffer = 0;
+	*lineTerminated = false;
 	int width = 0;
 	
 	while((readPos != NULL) && (readPos < editor.bufferEnd))
@@ -389,6 +391,7 @@ char *editor_LoadUnwrappedLine(char *readPos, int *lenBuffer, int maxWidth)
 		// if we hit a newline code, return the next character after the code
 		if(*readPos == '\n')
 		{
+			*lineTerminated = true;
 			return getNextBufferChar(readPos);
 		}
 		
@@ -471,6 +474,7 @@ void drawLine(char *start, int len)
 	}
 }
 
+/*
 bool editor_ScrollDownWrapped(void)
 {
 	char *lastLine = editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN -1];
@@ -503,7 +507,7 @@ bool editor_ScrollDownWrapped(void)
 	// success!
 	return true;
 }
-
+*/
 /*
 bool editor_ScrollDownUnwrapped(void)
 {
@@ -563,6 +567,7 @@ bool editor_ScrollDownUnwrapped(void)
 	int lastLineLen = editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1];
 	char *newLine = getNextLinePtrFromLoadedLine(lastLine, lastLineLen);
 	int newLineLen;
+	bool lineTerminated;
 	
 	// if there aren't any more lines to load
 	if((lastLine == NULL) || newLine >= editor.bufferEnd)
@@ -581,7 +586,7 @@ bool editor_ScrollDownUnwrapped(void)
 	
 	// set the pointer of the new line and load its length
 	editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] = newLine;
-	editor_LoadUnwrappedLine(newLine, &newLineLen, MAX_LINE_PIXEL_WIDTH);
+	editor_LoadUnwrappedLine(newLine, MAX_LINE_PIXEL_WIDTH, &newLineLen, &lineTerminated);
 	editor.lineLengths[editor.lineOffset + MAX_LINES_ON_EDITOR_SCREEN - 1] = newLineLen;
 
 	return true;
@@ -622,17 +627,22 @@ bool editor_ScrollUpUnwrapped(void)
 void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 {
 	int length;
+	bool isTerminated;
 	
 	for(int i = 0, lineIndex = editor.lineOffset; (i < MAX_LINES_ON_EDITOR_SCREEN); i++, lineIndex++)
 	{
 		if(startingPtr == NULL)
 		{
 			editor.linePointers[i] = NULL;
+			editor.lineTerminated[i] = false;
 			editor.lineLengths[lineIndex] = 0;
 		}
-		editor.linePointers[i] = startingPtr;
-		startingPtr = editor_LoadUnwrappedLine(editor.linePointers[i], &length, MAX_LINE_PIXEL_WIDTH);
-		editor.lineLengths[lineIndex] = length;
+		else
+		{
+			editor.linePointers[i] = startingPtr;
+			startingPtr = editor_LoadUnwrappedLine(editor.linePointers[i], MAX_LINE_PIXEL_WIDTH, &length, &isTerminated);
+			editor.lineLengths[lineIndex] = length;
+		}
 	}
 }
 
@@ -825,13 +835,14 @@ bool moveCursorUp(void)
 	
 	// this if-else block calculates the new cursor position and how much data we need to shift to the right
 	
-	// if we're still on the first line (which means we couldn't scroll up), then move the cursor to the start of the line (standard behavior)
+	// if our cursor is still on the first line (which means we couldn't scroll up), then move the cursor to the start of the line (standard behavior)
 	if(editor.cursorRow == 0)
 	{
 		dbg_printf("Moving to start of line\n");
 		newCol = 0;
 		newRow = 0;
-		dataShiftSize = editor.cursorCol;		
+		editor.desiredCol = 0;
+		dataShiftSize = editor.cursorCol;
 	}
 	// if we're actually going to move up a line
 	else
