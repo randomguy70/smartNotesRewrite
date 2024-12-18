@@ -548,7 +548,12 @@ char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed)
 	
 	char character = '\0';
 	
-	if (mode == NUMBERS)
+	if(keyPressed >= 48)
+	{
+		return '\0';
+	}
+	
+	if (mode == MATH)
 	{
 		character = numsDat[keyPressed];
 		return character;

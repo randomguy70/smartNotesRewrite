@@ -5,12 +5,14 @@
 #include "menu.h"
 #include "colors.h"
 #include "finder.h"
+#include "keypress.h"
 
 #include <graphx.h>
 #include <fileioc.h>
 #include <keypadc.h>
 #include <fontlibc.h>
 #include <stdbool.h>
+#include <ti/getcsc.h>
 #include <debug.h>
 
 // does what it says
@@ -43,6 +45,8 @@ void wipeEditor()
 	editor.cursorRow = 0;
 	editor.cursorCol = 0;
 	editor.desiredCol = 0;
+	
+	editor.textMode = LOWERCASE;
 }
 
 // loads the menu bar
@@ -67,6 +71,7 @@ enum programState runEditor()
 		if(editor.redrawText == true)
 		{
 			editor.redrawText = false;
+			
 			gfx_SetDrawBuffer();
 			drawEditorBackground();
 			drawEditorText();
@@ -82,6 +87,7 @@ enum programState runEditor()
 			return FINDER;
 		}
 		
+		// moving cursor 
 		
 		else if(kb_IsDown(kb_KeyRight))
 		{
@@ -102,6 +108,16 @@ enum programState runEditor()
 		{
 			moveCursorDown();
 			editor.redrawText = true;
+		}
+		
+		// text insertion
+		
+		sk_key_t keyPressed = getSingleCSCKey();
+		char inputChar = '\0';
+		if(keyPressed)
+		{
+			inputChar = getCharFromKeyPress(editor.textMode, keyPressed);
+			bool successfulInput = inputCharacter(inputChar);
 		}
 	}
 	
@@ -629,7 +645,7 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 	int length;
 	bool isTerminated;
 	
-	for(int i = 0, lineIndex = editor.lineOffset; (i < MAX_LINES_ON_EDITOR_SCREEN); i++, lineIndex++)
+	for(int i = startingLine, lineIndex = editor.lineOffset; (i < MAX_LINES_ON_EDITOR_SCREEN); i++, lineIndex++)
 	{
 		if(startingPtr == NULL)
 		{
@@ -645,6 +661,7 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 		}
 	}
 }
+
 
 void drawEditorCursor(void)
 {
@@ -804,7 +821,6 @@ bool moveCursorRight(void)
 	return true;
 }
 
-// XXX fix scrolling up bug (very perplexing)
 bool moveCursorUp(void)
 {
 	// if we're at the very beginning of the file, we can't move the cursor up
@@ -898,9 +914,7 @@ bool moveCursorUp(void)
 	return true;
 }
 
-// XXX XXX XXX
-// ALSO, SPEED UP SCROLLING PLS!!!
-// maybe don't redraw everything when you move the cursor - just redraw the characters on either side of the cursor
+// XXX maybe don't redraw everything when you move the cursor - just redraw the characters on either side of the cursor
 bool moveCursorDown(void)
 {
 	if(editor.afterCursor == editor.bufferEnd)
@@ -987,4 +1001,34 @@ bool moveCursorDown(void)
 	editor.cursorCol = newCursorCol;
 	
 	return true;
+}
+
+bool inputCharacter(char charIn)
+{
+	if((editor.dataSize >= MAX_DATA_SIZE) || (charIn == '\0'))
+	{
+		return false;
+	}
+	
+	// if the file was hitherto empty, initialize the first line pointer and length
+	
+	if(editor.dataSize == 0)
+	{
+		editor.linePointers[0] = editor.buffer;
+		editor.lineLengths[0] = 1;
+	}
+	
+	*editor.cursorInsert = charIn;
+	editor.cursorInsert++;
+	editor.dataSize++;
+	
+	
+	
+	editor_LoadUnwrappedScreen(editor.linePointers[editor.cursorRow], editor.cursorRow);
+	editor.redrawText = true;
+	//  check if the character fits on the current line, 
+	// if it doesn't, we'll need to shift all the lines below to make room
+	
+	
+	// XXX maybe more
 }

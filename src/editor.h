@@ -4,6 +4,7 @@
 #include "file.h"
 #include "menu.h"
 #include "main.h"
+#include "ui.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,6 +60,8 @@ struct editor
 	char *linePointers[MAX_LINES_ON_EDITOR_SCREEN]; // pointers to lines of text displayed onscreen
 	bool lineTerminated[MAX_LINES_ON_EDITOR_SCREEN]; // whether or not each line is terminated by a newline code ('\n')
 	int lineLengths[MAX_FILE_LINES]; // list of all line lengths ***ONLY VALID from the first line in the file to the bottom line displayed onscreen***
+	
+	enum textMode textMode;
 };
 extern struct editor editor;
 
@@ -139,6 +142,8 @@ bool moveCursorLeft(void);
 bool moveCursorRight(void);
 bool moveCursorUp(void);
 bool moveCursorDown(void);
+
+bool inputCharacter(char charIn);
 
 #ifdef __cplusplus
 }

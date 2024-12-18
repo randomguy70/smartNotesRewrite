@@ -8,7 +8,7 @@ extern "C" {
 #include <stdint.h>
 #include <ti/getcsc.h>
 
-uint8_t getSingleCSCKey(void);
+sk_key_t getSingleCSCKey(void);
 
 #ifdef __cplusplus
 }

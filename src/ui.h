@@ -13,7 +13,9 @@ extern "C" {
 #define INPUT_TEXT_BOX_HEIGHT 16
 #define INPUT_TEXT_BOX_CURSOR_HEIGHT 10
 
-enum textMode {NUMBERS, UPPERCASE, LOWERCASE};
+// what type of characters we're typing in. Lowercase, Caps, math
+enum textMode {MATH, UPPERCASE, LOWERCASE};
+
 struct inputState
 {
 	enum textMode textMode;
