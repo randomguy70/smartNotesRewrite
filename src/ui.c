@@ -571,3 +571,9 @@ char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed)
 	
 	return character;
 }
+
+void waitForAllKeysReleased(void)
+{
+	kb_Scan();
+	while(kb_AnyKey()) kb_Scan();
+}

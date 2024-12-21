@@ -191,7 +191,7 @@ bool createNotesFile(char *aestheticName)
 			
 			return true;
 		}
-		// if a file with the same os name already exists, change the os name a tad
+		// if a file with the same os name already exists, change the os name a tad until it's unique
 		else
 		{
 			osName[0]++;

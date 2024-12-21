@@ -17,6 +17,8 @@
 
 // does what it says
 void wipeEditor();
+void debug_printEditorLines(void);
+void debug_printEditor(void);
 
 // erases every variable in the editor
 void wipeEditor()
@@ -63,8 +65,10 @@ enum programState runEditor()
 	loadFileData(editor.file);
 	
 	editor_LoadUnwrappedScreen(editor.afterCursor, 0);
-	
 	drawEditor();
+	
+	// wait for all keys to be released before we start looping to prevent accidental input
+	waitForAllKeysReleased();
 	
 	while(programState == EDITOR)
 	{
@@ -89,36 +93,47 @@ enum programState runEditor()
 		
 		// moving cursor 
 		
-		else if(kb_IsDown(kb_KeyRight))
+		else if(kb_Data[7])
 		{
-			moveCursorRight();
-			editor.redrawText = true;
-		}
-		else if(kb_IsDown(kb_KeyLeft))
-		{
-			moveCursorLeft();
-			editor.redrawText = true;
-		}
-		else if(kb_IsDown(kb_KeyUp))
-		{
-			moveCursorUp();
-			editor.redrawText = true;
-		}
-		else if(kb_IsDown(kb_KeyDown))
-		{
-			moveCursorDown();
-			editor.redrawText = true;
+			if(kb_IsDown(kb_KeyRight))
+			{
+				moveCursorRight();
+				editor.redrawText = true;
+				debug_printEditor();
+			}
+			else if(kb_IsDown(kb_KeyLeft))
+			{
+				moveCursorLeft();
+				editor.redrawText = true;
+				debug_printEditor();
+			}
+			else if(kb_IsDown(kb_KeyUp))
+			{
+				moveCursorUp();
+				editor.redrawText = true;
+				debug_printEditor();
+			}
+			else if(kb_IsDown(kb_KeyDown))
+			{
+				moveCursorDown();
+				editor.redrawText = true;
+				debug_printEditor();
+			}
 		}
 		
 		// text insertion
 		
-		sk_key_t keyPressed = getSingleCSCKey();
-		char inputChar = '\0';
-		if(keyPressed)
+		else
 		{
-			inputChar = getCharFromKeyPress(editor.textMode, keyPressed);
-			bool successfulInput = inputCharacter(inputChar);
+			sk_key_t keyPressed = getSingleCSCKey();
+			char inputChar = '\0';
+			if(keyPressed)
+			{
+				inputChar = getCharFromKeyPress(editor.textMode, keyPressed);
+				bool successfulInput = inputCharacter(inputChar);
+			}
 		}
+		
 	}
 	
 	return programState;
@@ -738,12 +753,12 @@ bool moveCursorLeft(void)
 	// to point to the right side of the split buffer
 	if(editor.cursorCol == 0)
 	{
-		dbg_printf("updated line %d's pointer to %p\n", editor.lineOffset + editor.cursorRow, editor.afterCursor);
+		// dbg_printf("updated line %d's pointer to %p\n", editor.lineOffset + editor.cursorRow, editor.afterCursor);
 		editor.linePointers[editor.cursorRow] = editor.afterCursor;
 	}
 	
 	editor.desiredCol = editor.cursorCol;
-	dbg_printf("Cursor Pos - Row: %d, Col: %d, Insert: %p, AfterCursor: %p, LinePointer: %p\n", editor.cursorRow, editor.cursorCol, editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow]);
+	// dbg_printf("Cursor Pos - Row: %d, Col: %d, Insert: %p, AfterCursor: %p, LinePointer: %p, Len: %d\n", editor.cursorRow, editor.cursorCol, editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.lineLengths[editor.lineOffset + editor.cursorRow]);
 	
 	return true;
 }
@@ -751,8 +766,10 @@ bool moveCursorLeft(void)
 bool moveCursorRight(void)
 {
 	// if the cursor is already at the end of the file, it can't move farther
-	if(editor.afterCursor >= editor.bufferEnd)
+	// XXX replaced the >= with >, shouldn't cause problems but keep in mind
+	if(editor.afterCursor > editor.bufferEnd)
 	{
+		dbg_printf("At end of file\n");
 		return false;
 	}
 	
@@ -777,6 +794,7 @@ bool moveCursorRight(void)
 			}
 			else
 			{
+				dbg_printf("couldn't scroll down\n");
 				return false;
 			}
 		}
@@ -816,7 +834,7 @@ bool moveCursorRight(void)
 	
 	editor.desiredCol = editor.cursorCol;
 	
-	dbg_printf("Cursor Pos - Row: %d, Col: %d, Insert: %p, AfterCursor: %p, LinePointer: %p\n", editor.cursorRow, editor.cursorCol, editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow]);
+	// dbg_printf("Cursor Pos - Row: %d, Col: %d, Insert: %p, AfterCursor: %p, LinePointer: %p, Len: %d\n", editor.cursorRow, editor.cursorCol, editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.lineLengths[editor.lineOffset + editor.cursorRow]);
 	
 	return true;
 }
@@ -1022,13 +1040,51 @@ bool inputCharacter(char charIn)
 	editor.cursorInsert++;
 	editor.dataSize++;
 	
+	debug_printEditor();
+	editor_LoadUnwrappedScreen(editor.linePointers[0], 0);
 	
+	debug_printEditor();
 	
-	editor_LoadUnwrappedScreen(editor.linePointers[editor.cursorRow], editor.cursorRow);
+	// we need to know where the cursor goes now.
+	// so, check if the character we just entered fit on the current line or had to be moved down to the next line. 
+	
+	if(((editor.cursorInsert - 1) < editor.linePointers[editor.cursorRow + 1]) || (editor.linePointers[editor.cursorRow + 1] == NULL)) // if the newly inserted character ain't the first character of the next line, it fit on the current line
+	{
+		editor.cursorCol++;
+		editor.desiredCol++;
+	}
+	else
+	{
+		editor.cursorCol = 1;
+		editor.desiredCol = 1;
+		editor.cursorRow++;
+	}
+	
 	editor.redrawText = true;
 	//  check if the character fits on the current line, 
 	// if it doesn't, we'll need to shift all the lines below to make room
 	
 	
 	// XXX maybe more
+}
+
+// debug commands
+
+void debug_printEditorLines(void)
+{
+	dbg_printf("\n");
+	for(int i = 0; i < MAX_LINES_ON_EDITOR_SCREEN; i++) 
+	{
+		// print line number, pointer to line beginning, line length, line text
+		dbg_printf("Line #: %d, ptr: %p, len: %d\n", i, editor.linePointers[i], editor.lineLengths[editor.lineOffset + i]);	
+	}
+	dbg_printf("\n");
+}
+
+void debug_printEditor(void)
+{
+	dbg_printf("cursorIn: %p, after: %p, row: %d, col: %d, desCol: %d\n", editor.cursorInsert, editor.afterCursor, editor.cursorRow, editor.cursorCol, editor.desiredCol);
+	dbg_printf("lineOffset: %d, startOfPage: %p\n", editor.lineOffset, editor.startOfPage);
+	dbg_printf("buffer: %p, bufferEnd: %p, dataSize: %u", editor.buffer, editor.bufferEnd, editor.dataSize);
+	debug_printEditorLines();
 }
