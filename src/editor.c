@@ -938,52 +938,53 @@ bool moveCursorUp(void)
 
 bool moveCursorDown(void)
 {
-	// XXX check out this statement
-	if(editor.afterCursor == editor.bufferEnd)
+	// XXX think through this statement. might be sus
+	if(editor.afterCursor > editor.bufferEnd)
 	{
 		return false;
 	}
 	
-	// if we're at the bottom of the screen, try scrolling down 1 line
+	// if we're at the bottom of the screen, try scrolling down a line
+	// if we're at the end of the file, simply move the cursor to the end of the line
+	
 	if(editor.cursorRow == (MAX_LINES_ON_EDITOR_SCREEN - 1))
 	{
 		bool scrollDownHuh = editor_ScrollDownUnwrapped();
-		dbg_printf("scrolled down\n");
-		if(!scrollDownHuh)
+		if(scrollDownHuh)
 		{
-			dbg_printf("scrolling down failed\n");
-			return false;
+			editor.cursorRow--;
 		}
 		else
 		{
-			dbg_printf("scrolling down worked\n");
-			editor.cursorRow--;
+			moveCursorToEndOfLine();
+			return false;
 		}
 	}
 	
-	dbg_printf("Before editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow);
+	// if we're on the last line anywhere, then move the cursor to the end of the current line
 	
-	// if we're already on the last line, then move the cursor to the end of the current line
 	if(editor.linePointers[editor.cursorRow + 1] == NULL)
 	{
-		int length = editor.lineLengths[editor.lineOffset + editor.cursorRow] - editor.cursorCol;
-		// got to update those line pointers...
-		if(length > 0)
-		{
-			editor.linePointers[editor.cursorRow] = editor.cursorInsert;
-		}
+		// int length = editor.lineLengths[editor.lineOffset + editor.cursorRow] - editor.cursorCol;
+		// // XXX got to update those line pointers...
+		// // if(length > 0)
+		// if(editor.cursorCol == 0)
+		// {
+		// 	editor.linePointers[editor.cursorRow] = editor.cursorInsert;
+		// }
 		
-		if( *(editor.linePointers[editor.cursorRow] + length - 1) == '\n')
-		{
-			length--;
-		}
-		for(int i = 0; i < length; i++)
-		{
-			*(editor.cursorInsert) = *(editor.afterCursor);
-			editor.cursorInsert++;
-			editor.afterCursor++;
-		}
-		editor.cursorCol += length;
+		// if( *(editor.linePointers[editor.cursorRow] + length - 1) == '\n')
+		// {
+		// 	length--;
+		// }
+		// for(int i = 0; i < length; i++)
+		// {
+		// 	*(editor.cursorInsert) = *(editor.afterCursor);
+		// 	editor.cursorInsert++;
+		// 	editor.afterCursor++;
+		// }
+		// editor.cursorCol += length;
+		moveCursorToEndOfLine();
 		return true;
 	}
 	
@@ -1018,7 +1019,7 @@ bool moveCursorDown(void)
 		editor.linePointers[editor.cursorRow] = (editor.cursorInsert - shiftSize);
 	}
 	
-	dbg_printf("After editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d, Desired Col %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow, editor.desiredCol);
+	// dbg_printf("After editor data:\nCursor Insert: %p, After Cursor %p, curLine pointer %p\nCursorCol %d, CursorRow %d, Desired Col %d\n", editor.cursorInsert, editor.afterCursor, editor.linePointers[editor.cursorRow], editor.cursorCol, editor.cursorRow, editor.desiredCol);
 	editor.cursorRow++;
 	editor.cursorCol = newCursorCol;
 	
@@ -1076,6 +1077,39 @@ bool inputCharacter(char charIn)
 	
 	
 	// XXX maybe more
+}
+
+bool moveCursorToEndOfLine(void)
+{
+	dbg_printf("Moving cursor to end of line\n");
+	
+	int length = editor.lineLengths[editor.lineOffset + editor.cursorRow] - editor.cursorCol;
+	
+	if(length <= 0) return false;
+	
+	// if we're changing the position of the first character in line, update line pointer
+	if(editor.cursorCol == 0)
+	{
+		editor.linePointers[editor.cursorRow] = editor.cursorInsert;
+	}
+	
+	// if the last character in the line is a newline, we'll ignore it
+	if( *(editor.linePointers[editor.cursorRow] + length - 1) == '\n')
+	{
+		length--;
+	}
+	
+	for(int i = 0; i < length; i++)
+	{
+		*(editor.cursorInsert) = *(editor.afterCursor);
+		editor.cursorInsert++;
+		editor.afterCursor++;
+	}
+	
+	editor.cursorCol += length;
+	editor.desiredCol = editor.cursorCol;
+	
+	return true;
 }
 
 // debug commands

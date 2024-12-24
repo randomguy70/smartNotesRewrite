@@ -144,6 +144,7 @@ bool moveCursorUp(void);
 bool moveCursorDown(void);
 
 bool inputCharacter(char charIn);
+bool moveCursorToEndOfLine(void);
 
 #ifdef __cplusplus
 }
