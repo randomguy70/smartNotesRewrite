@@ -131,6 +131,7 @@ enum programState runEditor()
 			{
 				inputChar = getCharFromKeyPress(editor.textMode, keyPressed);
 				bool successfulInput = inputCharacter(inputChar);
+				debug_printEditor();
 			}
 		}
 		
@@ -378,7 +379,7 @@ char* editor_LoadWrappedLine(char *readPos, int *lenBuffer)
 			}
 			
 			// if we hit the end of the buffer
-			if(readPos >= editor.bufferEnd)
+			if(readPos > editor.bufferEnd)
 			{
 				*lenBuffer = lineLen;
 				dbg_printf("Finished reading out buffer\n");
@@ -417,7 +418,7 @@ char *editor_LoadUnwrappedLine(char *readPos, int maxWidth, int *lenBuffer, bool
 	*lineTerminated = false;
 	int width = 0;
 	
-	while((readPos != NULL) && (readPos < editor.bufferEnd))
+	while((readPos != NULL) && (readPos <= editor.bufferEnd))
 	{
 		// if we hit a newline code, return the next character after the code
 		if(*readPos == '\n')
@@ -466,7 +467,7 @@ char *getNextLinePtrFromLoadedLine(char *start, int length)
 char *getNextBufferChar(char *cur)
 {
 	cur++;
-	if(cur >= editor.bufferEnd)
+	if(cur > editor.bufferEnd)
 	{
 		return NULL;
 	}
@@ -514,7 +515,7 @@ bool editor_ScrollDownWrapped(void)
 	int newLineLen;
 	
 	// if there aren't any more lines to load
-	if((lastLine == NULL) || (newLine >= editor.bufferEnd))
+	if((lastLine == NULL) || (newLine > editor.bufferEnd))
 	{
 		return false;
 	}
@@ -552,7 +553,7 @@ bool editor_ScrollDownUnwrapped(void)
 	}
 	
 	// if we're on the last line, we can't scroll down any more
-	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] >= editor.bufferEnd)
+	if(editor.linePointers[MAX_LINES_ON_EDITOR_SCREEN - 1] + editor.lineLengths[MAX_LINES_ON_EDITOR_SCREEN - 1] > editor.bufferEnd)
 	{
 		return false;
 	}
@@ -601,7 +602,7 @@ bool editor_ScrollDownUnwrapped(void)
 	bool lineTerminated;
 	
 	// if there aren't any more lines to load
-	if((lastLine == NULL) || newLine >= editor.bufferEnd)
+	if((lastLine == NULL) || newLine > editor.bufferEnd)
 	{
 		return false;
 	}
@@ -673,6 +674,7 @@ void editor_LoadUnwrappedScreen(char *startingPtr, int startingLine)
 			editor.linePointers[i] = startingPtr;
 			startingPtr = editor_LoadUnwrappedLine(editor.linePointers[i], MAX_LINE_PIXEL_WIDTH, &length, &isTerminated);
 			editor.lineLengths[lineIndex] = length;
+			dbg_printf("\n\nloaded line with length %d and pointer %p\n\n", length, editor.linePointers[i]);
 		}
 	}
 }
@@ -933,8 +935,10 @@ bool moveCursorUp(void)
 }
 
 // XXX maybe don't redraw everything when you move the cursor - just redraw the characters on either side of the cursor
+
 bool moveCursorDown(void)
 {
+	// XXX check out this statement
 	if(editor.afterCursor == editor.bufferEnd)
 	{
 		return false;
@@ -1025,25 +1029,31 @@ bool inputCharacter(char charIn)
 {
 	if((editor.dataSize >= MAX_DATA_SIZE) || (charIn == '\0'))
 	{
+		dbg_printf("Attempted insertion exceeds max file capacity\n");
 		return false;
 	}
 	
 	// if the file was hitherto empty, initialize the first line pointer and length
-	
 	if(editor.dataSize == 0)
 	{
 		editor.linePointers[0] = editor.buffer;
 		editor.lineLengths[0] = 1;
 	}
 	
+	// if we inserted a character at the beginning of a line, then we need to update the line's pointer
+	else if(editor.cursorCol == 0)
+	{
+		editor.linePointers[editor.cursorRow] = editor.cursorInsert;
+	}
+	
 	*editor.cursorInsert = charIn;
 	editor.cursorInsert++;
 	editor.dataSize++;
 	
-	debug_printEditor();
+	// debug_printEditor();
 	editor_LoadUnwrappedScreen(editor.linePointers[0], 0);
 	
-	debug_printEditor();
+	// debug_printEditor();
 	
 	// we need to know where the cursor goes now.
 	// so, check if the character we just entered fit on the current line or had to be moved down to the next line. 
