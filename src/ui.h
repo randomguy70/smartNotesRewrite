@@ -70,7 +70,7 @@ char *getStrWord(char *str, int *widthBuffer, int *lenBuffer);
 */
 bool inputString(char* buffer, uint8_t maxLength, bool restrictFirstChar, int boxX, int boxY, int boxWidth);
 
-char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed);
+char getCharFromKeyPress(enum textMode mode, uint8_t keyPressed, bool allowNewLines);
 void waitForAllKeysReleased(void);
 
 #ifdef __cplusplus

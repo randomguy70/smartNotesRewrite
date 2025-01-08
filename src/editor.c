@@ -129,7 +129,7 @@ enum programState runEditor()
 			char inputChar = '\0';
 			if(keyPressed)
 			{
-				inputChar = getCharFromKeyPress(editor.textMode, keyPressed);
+				inputChar = getCharFromKeyPress(editor.textMode, keyPressed, true);
 				bool successfulInput = inputCharacter(inputChar);
 				debug_printEditor();
 			}
@@ -791,7 +791,7 @@ bool moveCursorRight(void)
 					*editor.cursorInsert = '\n';
 					editor.cursorInsert++;
 					*editor.afterCursor = '\0';
-					*editor.afterCursor++;
+					*editor.afterCursor++; // XXX VERY SUS not sure what i was thinking earlier i might need to take off the *
 				}
 			}
 			else
@@ -965,25 +965,6 @@ bool moveCursorDown(void)
 	
 	if(editor.linePointers[editor.cursorRow + 1] == NULL)
 	{
-		// int length = editor.lineLengths[editor.lineOffset + editor.cursorRow] - editor.cursorCol;
-		// // XXX got to update those line pointers...
-		// // if(length > 0)
-		// if(editor.cursorCol == 0)
-		// {
-		// 	editor.linePointers[editor.cursorRow] = editor.cursorInsert;
-		// }
-		
-		// if( *(editor.linePointers[editor.cursorRow] + length - 1) == '\n')
-		// {
-		// 	length--;
-		// }
-		// for(int i = 0; i < length; i++)
-		// {
-		// 	*(editor.cursorInsert) = *(editor.afterCursor);
-		// 	editor.cursorInsert++;
-		// 	editor.afterCursor++;
-		// }
-		// editor.cursorCol += length;
 		moveCursorToEndOfLine();
 		return true;
 	}
@@ -1054,27 +1035,56 @@ bool inputCharacter(char charIn)
 	// debug_printEditor();
 	editor_LoadUnwrappedScreen(editor.linePointers[0], 0);
 	
-	// debug_printEditor();
+	// we need to know where the cursor goes now
+	// if user hit enter, cursor begins on next line
 	
-	// we need to know where the cursor goes now.
-	// so, check if the character we just entered fit on the current line or had to be moved down to the next line. 
-	
-	if(((editor.cursorInsert - 1) < editor.linePointers[editor.cursorRow + 1]) || (editor.linePointers[editor.cursorRow + 1] == NULL)) // if the newly inserted character ain't the first character of the next line, it fit on the current line
+	if(charIn == '\n')
 	{
-		editor.cursorCol++;
-		editor.desiredCol++;
+		if(editor.cursorRow == (MAX_LINES_ON_EDITOR_SCREEN - 1))
+		{
+			bool scrolledUp = editor_ScrollDownUnwrapped();
+			if(scrolledUp)
+			{
+				
+			}
+			else
+			{
+				dbg_printf("couldn't scroll down to add a newline\n");
+				return false;
+			}
+		}
+		// 
+		else
+		{
+			editor.cursorRow++;
+			editor.cursorCol = 0;
+			editor.desiredCol = 1;
+		}
+		
+		editor.redrawText = true;
+		return true;
 	}
+	
 	else
 	{
-		editor.cursorCol = 1;
-		editor.desiredCol = 1;
-		editor.cursorRow++;
+		// check if the character we just entered fit on the current line or had to be moved down to the next line. 
+	
+		if(((editor.cursorInsert - 1) < editor.linePointers[editor.cursorRow + 1]) || (editor.linePointers[editor.cursorRow + 1] == NULL)) // if the newly inserted character ain't the first character of the next line, it fit on the current line
+		{
+			editor.cursorCol++;
+			editor.desiredCol++;
+		}
+		else
+		{
+			editor.cursorCol = 1;
+			editor.desiredCol = 1;
+			editor.cursorRow++;
+		}
+		
+		editor.redrawText = true;
+		//  check if the character fits on the current line, 
+		// if it doesn't, we'll need to shift all the lines below to make room	
 	}
-	
-	editor.redrawText = true;
-	//  check if the character fits on the current line, 
-	// if it doesn't, we'll need to shift all the lines below to make room
-	
 	
 	// XXX maybe more
 }
