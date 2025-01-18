@@ -118,13 +118,11 @@ char *getPrevBufferChar(char *cur);
 void drawLine(char *start, int len);
 
 // scrolls down 1 line
-// used if settings specify word wrapping
-// returns true if you can scroll down, false if you can't
-bool editor_ScrollDownWrapped(void);
+// make sure to set the new cursor column manually!
+// bool editor_ScrollDownWrapped(void);
 
 // scrolls down 1 line
-// used if settings specify no word wrapping
-// returns true if you can scroll down, false if you can't
+// make sure to set the new cursor column manually!
 bool editor_ScrollDownUnwrapped(void);
 
 // scrolls up 1 line

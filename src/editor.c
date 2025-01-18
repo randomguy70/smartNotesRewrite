@@ -424,6 +424,7 @@ char *editor_LoadUnwrappedLine(char *readPos, int maxWidth, int *lenBuffer, bool
 		if(*readPos == '\n')
 		{
 			*lineTerminated = true;
+			dbg_printf("\nreturning line readPos: %p\n\n", readPos);
 			return getNextBufferChar(readPos);
 		}
 		
@@ -1009,9 +1010,15 @@ bool moveCursorDown(void)
 
 bool inputCharacter(char charIn)
 {
-	if((editor.dataSize >= MAX_DATA_SIZE) || (charIn == '\0'))
+	// if the file is already full or the character ain't valid...
+	if(editor.dataSize >= MAX_DATA_SIZE)
 	{
 		dbg_printf("Attempted insertion exceeds max file capacity\n");
+		return false;
+	}
+	if(charIn == '\0')
+	{
+		dbg_printf("Invalid input\n");
 		return false;
 	}
 	
@@ -1032,40 +1039,30 @@ bool inputCharacter(char charIn)
 	editor.cursorInsert++;
 	editor.dataSize++;
 	
-	// debug_printEditor();
-	editor_LoadUnwrappedScreen(editor.linePointers[0], 0);
-	
-	// we need to know where the cursor goes now
-	// if user hit enter, cursor begins on next line
-	
 	if(charIn == '\n')
 	{
 		if(editor.cursorRow == (MAX_LINES_ON_EDITOR_SCREEN - 1))
 		{
-			bool scrolledUp = editor_ScrollDownUnwrapped();
-			if(scrolledUp)
-			{
-				
-			}
-			else
+			bool scrolledDown = editor_ScrollDownUnwrapped();
+			if(scrolledDown == false)
 			{
 				dbg_printf("couldn't scroll down to add a newline\n");
 				return false;
 			}
 		}
-		// 
 		else
 		{
 			editor.cursorRow++;
-			editor.cursorCol = 0;
-			editor.desiredCol = 1;
 		}
 		
-		editor.redrawText = true;
-		return true;
+		editor.cursorCol = 0;
+		editor.desiredCol = 0;
 	}
 	
-	else
+	// debug_printEditor();
+	editor_LoadUnwrappedScreen(editor.linePointers[0], 0);
+	
+	if(charIn != '\n')
 	{
 		// check if the character we just entered fit on the current line or had to be moved down to the next line. 
 	
@@ -1080,13 +1077,9 @@ bool inputCharacter(char charIn)
 			editor.desiredCol = 1;
 			editor.cursorRow++;
 		}
-		
-		editor.redrawText = true;
-		//  check if the character fits on the current line, 
-		// if it doesn't, we'll need to shift all the lines below to make room	
 	}
 	
-	// XXX maybe more
+	editor.redrawText = true;
 }
 
 bool moveCursorToEndOfLine(void)
